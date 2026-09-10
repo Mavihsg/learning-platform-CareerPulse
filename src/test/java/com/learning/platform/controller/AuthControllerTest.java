@@ -28,7 +28,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/auth/login should authenticate existing user")
     void testLoginSuccess() throws Exception {
-        AuthRequestDto request = new AuthRequestDto("manish.kessler@enterprise.io", "password");
+        AuthRequestDto request = new AuthRequestDto("shivam.gupta@enterprise.io", "password");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -36,7 +36,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.token").exists())
-                .andExpect(jsonPath("$.data.user.name").value("Manish Kessler"));
+                .andExpect(jsonPath("$.data.user.name").value("Shivam Gupta"));
     }
 
     @Test

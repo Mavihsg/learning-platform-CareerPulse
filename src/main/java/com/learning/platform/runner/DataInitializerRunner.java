@@ -257,6 +257,11 @@ public class DataInitializerRunner implements ApplicationRunner {
     }
 
     private void seedEnrollmentsAndLogs() {
+        if (enrollmentRepository.count() > 0) {
+            log.info("Enrollments already present. Skipping initial enrollment seed.");
+            return;
+        }
+
         // Seed Manish / Alex Chen Core Track Enrollment
         Enrollment alexCore = new Enrollment("user_1", "PLAN_ADE_01");
         alexCore.setIsCoreTrack(true);

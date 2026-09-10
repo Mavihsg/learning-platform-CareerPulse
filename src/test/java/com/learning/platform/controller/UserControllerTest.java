@@ -36,7 +36,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Manish Kessler"))
+                .andExpect(jsonPath("$.data.name").value("Shivam Gupta"))
                 .andExpect(jsonPath("$.data.currentRoleTitle").exists())
                 .andExpect(jsonPath("$.data.skills").isArray());
     }
