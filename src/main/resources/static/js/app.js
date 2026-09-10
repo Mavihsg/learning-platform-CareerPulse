@@ -67,9 +67,33 @@ const App = {
     },
 
     async init() {
+        this.initNetflixIntro();
         this.initTheme();
         this.bindEvents();
         this.checkAuth();
+    },
+
+    initNetflixIntro() {
+        const overlay = document.getElementById('netflix-intro-overlay');
+        if (!overlay) return;
+
+        // Auto-dismiss after 2.3 seconds with smooth fade
+        this._introTimer = setTimeout(() => {
+            this.dismissNetflixIntro();
+        }, 2300);
+    },
+
+    dismissNetflixIntro() {
+        const overlay = document.getElementById('netflix-intro-overlay');
+        if (!overlay) return;
+        if (this._introTimer) {
+            clearTimeout(this._introTimer);
+            this._introTimer = null;
+        }
+        overlay.classList.add('netflix-fade-out');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 450);
     },
 
     initTheme() {
@@ -431,6 +455,16 @@ const App = {
 
         if (el('hud-streak-val')) el('hud-streak-val').textContent = `${d.streakDays !== undefined ? d.streakDays : 0}`;
 
+        const streakDays = d.streakDays !== undefined ? d.streakDays : 12;
+        const totalXp = d.totalXp !== undefined ? d.totalXp : (d.xp !== undefined ? d.xp : 480);
+        const shieldCount = d.shieldCount !== undefined ? d.shieldCount : 1;
+        const levelVal = d.currentLevel !== undefined ? d.currentLevel : 2;
+
+        if (el('dash-hero-streak')) el('dash-hero-streak').textContent = `${streakDays} Days`;
+        if (el('dash-hero-xp')) el('dash-hero-xp').textContent = `${totalXp} XP`;
+        if (el('dash-hero-shield')) el('dash-hero-shield').textContent = `${shieldCount} Shield`;
+        if (el('dash-hero-level')) el('dash-hero-level').textContent = `Level ${levelVal}`;
+
         if (d.upNextLesson) {
             if (el('dash-upnext-title')) el('dash-upnext-title').textContent = d.upNextLesson.lessonTitle || 'Start your first lesson';
             if (el('dash-upnext-meta')) {
@@ -486,19 +520,35 @@ const App = {
 
     renderOtherPlans(plans) {
         const list = document.getElementById('other-plans-list');
-        if (!list || !plans) return;
+        if (!list) return;
+
+        if (!plans || plans.length === 0) {
+            list.innerHTML = `
+                <div class="dash-empty-plans">
+                    <p>No additional tracks enrolled yet.</p>
+                    <button type="button" class="btn-text-link" style="margin-top: 0.5rem; display: inline-block;" onclick="App.navigate('catalog')">Browse Course Catalog →</button>
+                </div>
+            `;
+            return;
+        }
 
         list.innerHTML = '';
         plans.forEach(p => {
+            const pct = p.progressPercentage !== undefined ? p.progressPercentage : 0;
             const item = document.createElement('div');
-            item.className = 'plan-progress-item';
+            item.className = 'dash-plan-card';
             item.innerHTML = `
-                <div class="plan-progress-top">
-                    <span>${this.escapeHtml(p.title)}</span>
-                    <span style="font-family: var(--font-mono);">${p.progressPercentage}%</span>
+                <div class="dash-plan-card-header">
+                    <span class="dash-plan-card-tag">${this.escapeHtml(p.category || 'Curriculum')}</span>
+                    <span class="dash-plan-card-pct">${pct}%</span>
                 </div>
-                <div class="plan-track-bar">
-                    <div class="plan-track-fill" style="width: ${p.progressPercentage}%;"></div>
+                <h4 class="dash-plan-card-title">${this.escapeHtml(p.title || 'Learning Track')}</h4>
+                <div class="dash-plan-card-bar">
+                    <div class="dash-plan-card-fill" style="width: ${pct}%;"></div>
+                </div>
+                <div class="dash-plan-card-footer">
+                    <span class="dash-plan-card-lessons">${p.completedLessons !== undefined ? p.completedLessons : Math.round((pct / 100) * 8)} / ${p.totalLessons || 8} lessons</span>
+                    <button type="button" class="dash-plan-card-action" onclick="App.navigate('plan')">Continue →</button>
                 </div>
             `;
             list.appendChild(item);

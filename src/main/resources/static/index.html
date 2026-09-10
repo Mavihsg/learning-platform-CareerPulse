@@ -29,6 +29,29 @@
 <body>
 
     <!-- =========================================================================
+         NETFLIX-STYLE CINEMATIC INTRO OVERLAY
+         ========================================================================= -->
+    <div class="netflix-intro-overlay" id="netflix-intro-overlay">
+        <div class="netflix-cinematic-stage">
+            <div class="netflix-ambient-glow"></div>
+            <div class="netflix-logo-container">
+                <div class="netflix-monogram">
+                    <span class="monogram-letter c">C</span>
+                    <span class="monogram-letter p">P</span>
+                    <div class="netflix-laser-streak"></div>
+                </div>
+                <div class="netflix-brand-text">
+                    <span class="brand-word">CAREER</span>
+                    <span class="brand-word highlight">PULSE</span>
+                </div>
+                <div class="netflix-tagline">CONTINUOUS LEARNING &amp; CAREER ADVANCEMENT</div>
+            </div>
+            <div class="netflix-light-beam"></div>
+        </div>
+        <button class="btn-skip-intro" id="btn-skip-intro" onclick="App.dismissNetflixIntro()">SKIP INTRO</button>
+    </div>
+
+    <!-- =========================================================================
          STARTUP AUTHENTICATION PORTAL (GATE)
          ========================================================================= -->
     <div class="auth-overlay" id="auth-modal" style="display: none;">
@@ -51,7 +74,7 @@
             <form id="auth-form-signin" onsubmit="App.handleLogin(event)" class="auth-form">
                 <div class="form-group">
                     <label class="form-label" for="auth-email">Work Email or User ID</label>
-                    <input type="text" id="auth-email" class="form-input" placeholder="manish.kessler@enterprise.io"
+                    <input type="text" id="auth-email" class="form-input" placeholder="shivam.gupta@enterprise.io"
                         required>
                 </div>
                 <div class="form-group">
@@ -68,23 +91,23 @@
             <form id="auth-form-register" onsubmit="App.handleRegister(event)" class="auth-form" style="display: none;">
                 <div class="form-group">
                     <label class="form-label" for="reg-name">Full Name</label>
-                    <input type="text" id="reg-name" class="form-input" placeholder="e.g. Alex Morgan" required>
+                    <input type="text" id="reg-name" class="form-input" placeholder="e.g. Shivam Gupta" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-email">Work Email</label>
-                    <input type="email" id="reg-email" class="form-input" placeholder="e.g. alex.morgan@enterprise.io"
+                    <input type="email" id="reg-email" class="form-input" placeholder="e.g. shivam.gupta@enterprise.io"
                         required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-role">Current Role Title</label>
-                    <input type="text" id="reg-role" class="form-input" value="Software Engineer"
-                        placeholder="e.g. Associate Backend Developer">
+                    <input type="text" id="reg-role" class="form-input" value="Junior Data Engineer"
+                        placeholder="e.g. Junior Data Engineer">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-track">Target Career Track</label>
                     <select id="reg-track" class="form-select">
-                        <option value="ROLE_SR_BACKEND_ENG">Senior Backend Developer</option>
                         <option value="ROLE_CLOUD_ARCHITECT">Cloud Solutions Architect</option>
+                        <option value="ROLE_SR_BACKEND_ENG">Senior Backend Developer</option>
                         <option value="ROLE_DATA_ENGINEER">Senior Data Engineer</option>
                     </select>
                 </div>
@@ -115,29 +138,6 @@
                     </svg>
                     Sign in with Google
                 </button>
-            </div>
-
-            <!-- Quick Demo Profile Switcher -->
-            <div class="quick-demo-section">
-                <span class="quick-demo-title">OR QUICK SIGN-IN AS DEMO USER:</span>
-                <div class="quick-demo-grid">
-                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_1')">
-                        <span class="demo-user-name">Shivam Gupta</span>
-                        <span class="demo-user-role">Junior Data Eng (38%)</span>
-                    </button>
-                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_2')">
-                        <span class="demo-user-name">Isha Agarwal</span>
-                        <span class="demo-user-role">Mid Backend (85%)</span>
-                    </button>
-                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_4')">
-                        <span class="demo-user-name">Nikhil Khanna</span>
-                        <span class="demo-user-role">Staff Architect (100%)</span>
-                    </button>
-                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_3')">
-                        <span class="demo-user-name">Pulkit Jain</span>
-                        <span class="demo-user-role">Associate Cloud (20%)</span>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -233,6 +233,7 @@
                             <path d="M12 20h9" />
                             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                         </svg>
+                        <span class="badge-ai-nav">AI</span>
                         <span>Plan builder</span>
                     </button>
                     <button class="nav-item" id="nav-my-courses" onclick="App.navigate('my-courses')">
@@ -330,93 +331,214 @@
                      VIEW 1: LEARNER DASHBOARD (HOME)
                      ========================================================= -->
                 <section class="view-panel active" id="view-dashboard">
-                    <div class="page-header">
-                        <h1 class="page-title" id="dash-greeting">Good afternoon, Shivam</h1>
-                        <p class="page-subtitle" id="dash-subtitle">Five lessons behind you this week. One module left
-                            before the capstone.</p>
+                    <!-- Dashboard Hero Banner -->
+                    <div class="dash-hero-banner">
+                        <div class="dash-hero-content">
+                            <div class="dash-hero-badge">
+                                <span class="dash-hero-pulse"></span>
+                                <span>ENTERPRISE LEARNER BENCHMARK</span>
+                            </div>
+                            <h1 class="dash-hero-greeting" id="dash-greeting">Good afternoon, Shivam</h1>
+                            <p class="dash-hero-subtitle" id="dash-subtitle">Targeting <strong>Cloud Solutions Architect</strong>. 5 of 13 lessons complete in your primary track.</p>
+                            <div class="dash-hero-metrics">
+                                <div class="dash-hero-pill">
+                                    <span class="pill-icon">🔥</span>
+                                    <span class="pill-val" id="dash-hero-streak">12 Days</span>
+                                    <span class="pill-lbl">Streak</span>
+                                </div>
+                                <div class="dash-hero-pill">
+                                    <span class="pill-icon">⚡</span>
+                                    <span class="pill-val" id="dash-hero-xp">480 XP</span>
+                                    <span class="pill-lbl">Total XP</span>
+                                </div>
+                                <div class="dash-hero-pill">
+                                    <span class="pill-icon">🛡️</span>
+                                    <span class="pill-val" id="dash-hero-shield">1 Shield</span>
+                                    <span class="pill-lbl">Active</span>
+                                </div>
+                                <div class="dash-hero-pill">
+                                    <span class="pill-icon">🎯</span>
+                                    <span class="pill-val" id="dash-hero-level">Level 2</span>
+                                    <span class="pill-lbl">Apprentice</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dash-hero-action">
+                            <button class="btn-hero-cta" onclick="App.navigate('quiz-arena')">
+                                <span class="btn-hero-icon">⚡</span>
+                                <span class="btn-hero-text">
+                                    <span class="btn-hero-title">Daily AI Quiz Arena</span>
+                                    <span class="btn-hero-sub">+50 XP Streak Multiplier</span>
+                                </span>
+                                <svg class="btn-hero-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="m9 18 6-6-6-6" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Dashboard Main Grid -->
+                    <!-- Dashboard Main Balanced Grid -->
                     <div class="dash-grid">
-                        <!-- Top Left: Core Track Hero Card -->
-                        <div class="card card-core-track">
-                            <div class="card-header-row">
-                                <span class="tag-plan-category" id="dash-core-plan-tag">PLAN 01 / CORE TRACK</span>
-                                <span class="badge-pct-pill" id="dash-core-pct-badge">38% complete</span>
-                            </div>
-
-                            <h2 class="core-course-title" id="dash-core-title">Applied Data Engineering</h2>
-                            <p class="core-course-sub" id="dash-core-sub">4 modules · 13 lessons · 6 h remaining</p>
-
-                            <div class="core-metrics-row">
-                                <!-- Donut Progress Circle -->
-                                <div class="donut-wrapper">
-                                    <svg class="donut-svg" viewBox="0 0 100 100">
-                                        <circle class="donut-bg" cx="50" cy="50" r="40"></circle>
-                                        <circle class="donut-fill" id="dash-donut-fill" cx="50" cy="50" r="40"
-                                            stroke-dasharray="251.2" stroke-dashoffset="155.7"></circle>
-                                    </svg>
-                                    <div class="donut-text" id="dash-donut-text">38%</div>
+                        <!-- Left / Primary Column -->
+                        <div class="dash-main-column">
+                            <!-- Core Track Hero Card -->
+                            <div class="card card-core-track">
+                                <div class="card-header-row">
+                                    <span class="tag-plan-category" id="dash-core-plan-tag">PLAN 01 / CORE TRACK</span>
+                                    <span class="badge-pct-pill" id="dash-core-pct-badge">38% complete</span>
                                 </div>
 
-                                <!-- Key Stats Grid -->
-                                <div class="stats-mini-grid">
-                                    <div class="stat-mini-box">
-                                        <div class="stat-val" id="dash-stat-lessons">5/13</div>
-                                        <div class="stat-lbl">LESSONS DONE</div>
+                                <h2 class="core-course-title" id="dash-core-title">Applied Data Engineering</h2>
+                                <p class="core-course-sub" id="dash-core-sub">4 modules · 13 lessons · 6 h remaining</p>
+
+                                <div class="core-metrics-row">
+                                    <!-- Donut Progress Circle -->
+                                    <div class="donut-wrapper">
+                                        <svg class="donut-svg" viewBox="0 0 100 100">
+                                            <circle class="donut-bg" cx="50" cy="50" r="40"></circle>
+                                            <circle class="donut-fill" id="dash-donut-fill" cx="50" cy="50" r="40"
+                                                stroke-dasharray="251.2" stroke-dashoffset="155.7"></circle>
+                                        </svg>
+                                        <div class="donut-text" id="dash-donut-text">38%</div>
                                     </div>
-                                    <div class="stat-mini-box">
-                                        <div class="stat-val" id="dash-stat-time">2 h</div>
-                                        <div class="stat-lbl">TIME LOGGED</div>
+
+                                    <!-- Key Stats Grid -->
+                                    <div class="stats-mini-grid">
+                                        <div class="stat-mini-box">
+                                            <div class="stat-val" id="dash-stat-lessons">5/13</div>
+                                            <div class="stat-lbl">LESSONS DONE</div>
+                                        </div>
+                                        <div class="stat-mini-box">
+                                            <div class="stat-val" id="dash-stat-time">2 h</div>
+                                            <div class="stat-lbl">TIME LOGGED</div>
+                                        </div>
+                                        <div class="stat-mini-box">
+                                            <div class="stat-val" id="dash-stat-streak">12</div>
+                                            <div class="stat-lbl">DAY STREAK</div>
+                                        </div>
+                                        <div class="stat-mini-box">
+                                            <div class="stat-val" id="dash-stat-plans">4</div>
+                                            <div class="stat-lbl">PLANS ENROLLED</div>
+                                        </div>
                                     </div>
-                                    <div class="stat-mini-box">
-                                        <div class="stat-val" id="dash-stat-streak">12</div>
-                                        <div class="stat-lbl">DAY STREAK</div>
+                                </div>
+
+                                <!-- "Up Next" Focus Card -->
+                                <div class="up-next-card">
+                                    <div class="up-next-info">
+                                        <div class="up-next-tag">UP NEXT</div>
+                                        <div class="up-next-title" id="dash-upnext-title">Build a daily ingest</div>
+                                        <div class="up-next-meta" id="dash-upnext-meta">Pipelines · Project · 90 min</div>
                                     </div>
-                                    <div class="stat-mini-box">
-                                        <div class="stat-val" id="dash-stat-plans">4</div>
-                                        <div class="stat-lbl">PLANS ENROLLED</div>
-                                    </div>
+                                    <button class="btn-open-upnext" onclick="App.openUpNextLesson()">Open</button>
                                 </div>
                             </div>
 
-                            <!-- "Up Next" Focus Card -->
-                            <div class="up-next-card">
-                                <div class="up-next-info">
-                                    <div class="up-next-tag">UP NEXT</div>
-                                    <div class="up-next-title" id="dash-upnext-title">Build a daily ingest</div>
-                                    <div class="up-next-meta" id="dash-upnext-meta">Pipelines · Project · 90 min</div>
+                            <!-- Interactive Daily AI Quiz Banner -->
+                            <div class="card card-daily-quiz-banner">
+                                <div class="daily-quiz-banner-icon">⚡</div>
+                                <div class="daily-quiz-banner-info">
+                                    <div class="daily-quiz-tag"><span class="badge-ai-inline">AI</span> DAILY KNOWLEDGE CHALLENGE</div>
+                                    <h3 class="daily-quiz-title">Keep your 12-day streak alive!</h3>
+                                    <p class="daily-quiz-desc">Sharpen your concepts with 5 AI-generated questions from your completed courses.</p>
                                 </div>
-                                <button class="btn-open-upnext" onclick="App.openUpNextLesson()">Open</button>
-                            </div>
-                        </div>
-
-                        <!-- Top Right: Weekly Activity Bar Chart Card -->
-                        <div class="card card-weekly-chart">
-                            <div class="card-header-row">
-                                <span class="chart-title">THIS WEEK</span>
-                            </div>
-
-                            <div class="chart-bars-container" id="weekly-bars-container">
-                                <!-- Populated dynamically by app.js -->
-                            </div>
-
-                            <div class="chart-caption" id="weekly-chart-caption">
-                                250 of 240 minutes logged. Target met on Friday.
-                            </div>
-                        </div>
-
-                        <!-- Bottom Right: Company Leaderboard Mini Widget (Top 3 + Active User) -->
-                        <div class="card card-mini-leaderboard">
-                            <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
-                                <span class="chart-title">COMPANY LEADERBOARD</span>
-                                <button type="button" class="btn-text-link" onclick="App.navigate('leaderboard')" style="font-size: 0.78rem; color: var(--primary-accent); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0;">
-                                    View All Standings →
+                                <button class="btn-start-daily-quiz" onclick="App.navigate('quiz-arena')">
+                                    <span>Start Quiz</span>
+                                    <span class="quiz-xp-badge">+50 XP</span>
                                 </button>
                             </div>
 
-                            <div class="mini-leaderboard-list" id="mini-leaderboard-list">
-                                <!-- Populated dynamically by app.js: Top 3 rankers + active user highlighted -->
+                            <!-- Enrolled Courses & Learning Tracks -->
+                            <div class="dash-enrolled-section">
+                                <div class="dash-section-header">
+                                    <div class="dash-section-title">ACTIVE ENROLLED TRACKS</div>
+                                    <button type="button" class="btn-text-link" onclick="App.navigate('my-learning')">View All Tracks →</button>
+                                </div>
+                                <div class="other-plans-grid" id="other-plans-list">
+                                    <!-- Populated dynamically by app.js -->
+                                </div>
+                            </div>
+
+                            <!-- Recent Milestones & Badges Preview -->
+                            <div class="dash-achievements-section">
+                                <div class="dash-section-header">
+                                    <div class="dash-section-title">RECENT MILESTONES &amp; BADGES</div>
+                                    <button type="button" class="btn-text-link" onclick="App.navigate('profile')">View Profile →</button>
+                                </div>
+                                <div class="dash-badges-grid" id="dash-badges-grid">
+                                    <div class="dash-badge-chip">
+                                        <span class="dash-badge-icon">👣</span>
+                                        <div class="dash-badge-info">
+                                            <div class="dash-badge-name">First Step</div>
+                                            <div class="dash-badge-desc">Enrolled in first curriculum</div>
+                                        </div>
+                                    </div>
+                                    <div class="dash-badge-chip">
+                                        <span class="dash-badge-icon">🔥</span>
+                                        <div class="dash-badge-info">
+                                            <div class="dash-badge-name">7-Day Streak</div>
+                                            <div class="dash-badge-desc">7 consecutive study days</div>
+                                        </div>
+                                    </div>
+                                    <div class="dash-badge-chip">
+                                        <span class="dash-badge-icon">⚡</span>
+                                        <div class="dash-badge-info">
+                                            <div class="dash-badge-name">Skill Specialist</div>
+                                            <div class="dash-badge-desc">Level 2 milestone reached</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right / Secondary Column -->
+                        <div class="dash-side-column">
+                            <!-- Weekly Activity Bar Chart Card -->
+                            <div class="card card-weekly-chart">
+                                <div class="card-header-row">
+                                    <span class="chart-title">THIS WEEK</span>
+                                </div>
+
+                                <div class="chart-bars-container" id="weekly-bars-container">
+                                    <!-- Populated dynamically by app.js -->
+                                </div>
+
+                                <div class="chart-caption" id="weekly-chart-caption">
+                                    250 of 240 minutes logged. Target met on Friday.
+                                </div>
+                            </div>
+
+                            <!-- Company Leaderboard Mini Widget (Top 3 + Active User) -->
+                            <div class="card card-mini-leaderboard">
+                                <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="chart-title">COMPANY LEADERBOARD</span>
+                                    <button type="button" class="btn-text-link" onclick="App.navigate('leaderboard')" style="font-size: 0.78rem; color: var(--primary-accent); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0;">
+                                        View All Standings →
+                                    </button>
+                                </div>
+
+                                <div class="mini-leaderboard-list" id="mini-leaderboard-list">
+                                    <!-- Populated dynamically by app.js: Top 3 rankers + active user highlighted -->
+                                </div>
+                            </div>
+
+                            <!-- Community & AI Mentor Spotlight -->
+                            <div class="card card-forum-spotlight">
+                                <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="chart-title">AI MENTOR &amp; COMMUNITY</span>
+                                    <button type="button" class="btn-text-link" onclick="App.navigate('discussions')" style="font-size: 0.78rem; color: var(--primary-accent); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0;">
+                                        Discussions →
+                                    </button>
+                                </div>
+                                <div class="forum-spotlight-body">
+                                    <div class="spotlight-badge"><span class="badge-ai-pill">⚡ AI Answered</span> Kubernetes</div>
+                                    <h4 class="spotlight-title">StatefulSets vs Deployments in Kafka clusters?</h4>
+                                    <p class="spotlight-desc">AI Mentor verified solution: StatefulSets guarantee ordinal pod scaling and storage volume pinning.</p>
+                                </div>
+                                <button class="btn-open-forum-spotlight" onclick="App.navigate('discussions')">
+                                    <span>Explore Discussion Board</span>
+                                    <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -814,13 +936,6 @@
                                 </div>
                             </div>
                             <div class="profile-header-actions" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                                <div class="profile-switcher-pill" style="display: inline-flex; gap: 0.35rem; background: var(--bg-surface-2, rgba(255,255,255,0.05)); padding: 0.3rem 0.6rem; border-radius: 999px; border: 1px solid var(--border-color, rgba(255,255,255,0.1)); align-items: center;">
-                                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.25rem;">Switch Demo:</span>
-                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_1')">Shivam</button>
-                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_2')">Isha</button>
-                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_3')">Pulkit</button>
-                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_4')">Nikhil</button>
-                                </div>
                                 <button class="btn-signout-profile" onclick="App.signOut()">
                                     <svg class="nav-svg-icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"
                                         fill="none" stroke="currentColor" stroke-width="2">
