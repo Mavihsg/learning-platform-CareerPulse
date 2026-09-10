@@ -1,0 +1,82 @@
+[
+  {
+    "id": "BADGE_FIRST_STEP",
+    "title": "First Step Forward",
+    "description": "Completed your first learning module on the platform.",
+    "icon": "award",
+    "category": "MILESTONE",
+    "xpBonus": 50,
+    "triggerType": "LESSON_COUNT",
+    "triggerThreshold": 1
+  },
+  {
+    "id": "BADGE_QUIZ_ACE",
+    "title": "Quiz Ace",
+    "description": "Passed a course quiz with a perfect 100% score.",
+    "icon": "target",
+    "category": "MASTERY",
+    "xpBonus": 100,
+    "triggerType": "QUIZ_SCORE",
+    "triggerThreshold": 100
+  },
+  {
+    "id": "BADGE_STREAK_3",
+    "title": "Consistent Learner",
+    "description": "Maintained a 3-day continuous learning streak.",
+    "icon": "flame",
+    "category": "STREAK",
+    "xpBonus": 120,
+    "triggerType": "STREAK_DAYS",
+    "triggerThreshold": 3
+  },
+  {
+    "id": "BADGE_STREAK_7",
+    "title": "Streak Titan",
+    "description": "Maintained a 7-day continuous learning streak.",
+    "icon": "zap",
+    "category": "STREAK",
+    "xpBonus": 250,
+    "triggerType": "STREAK_DAYS",
+    "triggerThreshold": 7
+  },
+  {
+    "id": "BADGE_CLOUD_PIONEER",
+    "title": "Cloud Pioneer",
+    "description": "Mastered cloud native skills including Kubernetes and AWS architecture.",
+    "icon": "cloud",
+    "category": "MASTERY",
+    "xpBonus": 300,
+    "triggerType": "ROLE_READY",
+    "triggerThreshold": 80
+  },
+  {
+    "id": "BADGE_XP_1000",
+    "title": "XP Millennial",
+    "description": "Crossed 1,000 total lifetime experience points.",
+    "icon": "star",
+    "category": "MILESTONE",
+    "xpBonus": 200,
+    "triggerType": "XP_TOTAL",
+    "triggerThreshold": 1000
+  },
+  {
+    "id": "BADGE_COURSES_3",
+    "title": "Triple Threat",
+    "description": "Completed 3 full courses on the platform.",
+    "icon": "trophy",
+    "category": "MILESTONE",
+    "xpBonus": 300,
+    "triggerType": "COURSE_COUNT",
+    "triggerThreshold": 3
+  },
+  {
+    "id": "BADGE_COURSES_5",
+    "title": "Master Scholar",
+    "description": "Completed 5 full courses on the platform.",
+    "icon": "crown",
+    "category": "MILESTONE",
+    "xpBonus": 600,
+    "triggerType": "COURSE_COUNT",
+    "triggerThreshold": 5
+  }
+]

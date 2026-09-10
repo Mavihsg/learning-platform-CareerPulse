@@ -1,0 +1,42 @@
+[
+  {
+    "id": "QUEST_DAILY_MODULE_1",
+    "title": "Daily Focus: 1 Module",
+    "description": "Complete at least one course module today to keep momentum.",
+    "questType": "DAILY",
+    "targetAction": "COMPLETE_MODULE",
+    "targetCount": 1,
+    "xpReward": 50,
+    "icon": "book-open"
+  },
+  {
+    "id": "QUEST_DAILY_QUIZ_1",
+    "title": "Knowledge Check",
+    "description": "Attempt and pass any course quiz today.",
+    "questType": "DAILY",
+    "targetAction": "PASS_QUIZ",
+    "targetCount": 1,
+    "xpReward": 75,
+    "icon": "help-circle"
+  },
+  {
+    "id": "QUEST_WEEKLY_XP_500",
+    "title": "Weekly Sprint: 500 XP",
+    "description": "Accumulate 500 XP this week through modules, quizzes, and streaks.",
+    "questType": "WEEKLY",
+    "targetAction": "EARN_XP",
+    "targetCount": 500,
+    "xpReward": 200,
+    "icon": "trending-up"
+  },
+  {
+    "id": "QUEST_WEEKLY_MODULES_3",
+    "title": "Deep Diver: 3 Modules",
+    "description": "Finish 3 comprehensive course modules in one calendar week.",
+    "questType": "WEEKLY",
+    "targetAction": "COMPLETE_MODULE",
+    "targetCount": 3,
+    "xpReward": 150,
+    "icon": "layers"
+  }
+]

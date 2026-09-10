@@ -1,0 +1,112 @@
+[
+  {
+    "id": "user_1",
+    "name": "Shivam Gupta",
+    "email": "shivam.gupta@enterprise.io",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Shivam",
+    "currentRoleTitle": "Junior Data Engineer",
+    "targetRoleId": "ROLE_CLOUD_ARCHITECT",
+    "targetRoleTitle": "Cloud Native Solutions Architect",
+    "currentLevel": 2,
+    "levelTitle": "Code Apprentice",
+    "currentXp": 480,
+    "xpToNextLevel": 1000,
+    "streakDays": 12,
+    "shieldCount": 1,
+    "lastActiveDate": "2026-09-02",
+    "unlockedBadgeIds": ["BADGE_FIRST_STEP", "BADGE_STREAK_7"],
+    "completedQuestIds": ["QUEST_DAILY_MODULE_1"],
+    "skills": [
+      { "skillId": "SKILL_SQL_POSTGRES", "skillName": "PostgreSQL & Query Optimization", "proficiencyLevel": "INTERMEDIATE", "score": 75, "verified": true },
+      { "skillId": "SKILL_JAVA_CORE", "skillName": "Core Java & Concurrency", "proficiencyLevel": "INTERMEDIATE", "score": 70, "verified": true },
+      { "skillId": "SKILL_SPRING_BOOT", "skillName": "Spring Boot & Spring Cloud", "proficiencyLevel": "BEGINNER", "score": 55, "verified": false },
+      { "skillId": "SKILL_DOCKER", "skillName": "Docker & Containerization", "proficiencyLevel": "BEGINNER", "score": 45, "verified": false }
+    ]
+  },
+  {
+    "id": "user_2",
+    "name": "Isha Agarwal",
+    "email": "isha.agarwal@enterprise.io",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Isha",
+    "currentRoleTitle": "Mid-Level Backend Developer",
+    "targetRoleId": "ROLE_SR_BACKEND_ENG",
+    "targetRoleTitle": "Senior Backend Engineer",
+    "currentLevel": 3,
+    "levelTitle": "Skill Specialist",
+    "currentXp": 1450,
+    "xpToNextLevel": 2000,
+    "streakDays": 8,
+    "shieldCount": 2,
+    "lastActiveDate": "2026-09-02",
+    "unlockedBadgeIds": ["BADGE_FIRST_STEP", "BADGE_STREAK_7", "BADGE_XP_1000"],
+    "completedQuestIds": ["QUEST_DAILY_MODULE_1", "QUEST_DAILY_QUIZ_1"],
+    "skills": [
+      { "skillId": "SKILL_JAVA_CORE", "skillName": "Core Java & Concurrency", "proficiencyLevel": "ADVANCED", "score": 85, "verified": true },
+      { "skillId": "SKILL_SPRING_BOOT", "skillName": "Spring Boot & Spring Cloud", "proficiencyLevel": "ADVANCED", "score": 82, "verified": true }
+    ]
+  },
+  {
+    "id": "user_3",
+    "name": "Pulkit Jain",
+    "email": "pulkit.jain@enterprise.io",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Pulkit",
+    "currentRoleTitle": "Associate Cloud Engineer",
+    "targetRoleId": "ROLE_DEVOPS_LEAD",
+    "targetRoleTitle": "Principal DevOps & Platform Engineer",
+    "currentLevel": 1,
+    "levelTitle": "Novice Explorer",
+    "currentXp": 220,
+    "xpToNextLevel": 500,
+    "streakDays": 2,
+    "shieldCount": 0,
+    "lastActiveDate": "2026-09-01",
+    "unlockedBadgeIds": ["BADGE_FIRST_STEP"],
+    "completedQuestIds": [],
+    "skills": [
+      { "skillId": "SKILL_DOCKER", "skillName": "Docker & Containerization", "proficiencyLevel": "BEGINNER", "score": 40, "verified": false }
+    ]
+  },
+  {
+    "id": "user_4",
+    "name": "Nikhil Khanna",
+    "email": "nikhil.khanna@enterprise.io",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Nikhil",
+    "currentRoleTitle": "Staff Software Architect",
+    "targetRoleId": "ROLE_CLOUD_ARCHITECT",
+    "targetRoleTitle": "Cloud Native Solutions Architect",
+    "currentLevel": 5,
+    "levelTitle": "Grandmaster",
+    "currentXp": 4850,
+    "xpToNextLevel": 5000,
+    "streakDays": 28,
+    "shieldCount": 3,
+    "lastActiveDate": "2026-09-02",
+    "unlockedBadgeIds": ["BADGE_FIRST_STEP", "BADGE_STREAK_7", "BADGE_CLOUD_PIONEER", "BADGE_XP_1000", "BADGE_QUIZ_ACE"],
+    "completedQuestIds": ["QUEST_DAILY_MODULE_1", "QUEST_DAILY_QUIZ_1", "QUEST_WEEKLY_XP_500"],
+    "skills": [
+      { "skillId": "SKILL_SYSTEM_DESIGN", "skillName": "Large-Scale Distributed System Design", "proficiencyLevel": "EXPERT", "score": 95, "verified": true },
+      { "skillId": "SKILL_MICROSERVICES", "skillName": "Distributed Microservices Architecture", "proficiencyLevel": "EXPERT", "score": 92, "verified": true }
+    ]
+  },
+  {
+    "id": "user_5",
+    "name": "Rhea Sharma",
+    "email": "rhea.sharma@enterprise.io",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=Rhea",
+    "currentRoleTitle": "Senior Backend Developer",
+    "targetRoleId": "ROLE_SR_BACKEND_ENG",
+    "targetRoleTitle": "Senior Backend Engineer",
+    "currentLevel": 3,
+    "levelTitle": "Skill Specialist",
+    "currentXp": 1680,
+    "xpToNextLevel": 2000,
+    "streakDays": 6,
+    "shieldCount": 1,
+    "lastActiveDate": "2026-09-02",
+    "unlockedBadgeIds": ["BADGE_FIRST_STEP", "BADGE_STREAK_7", "BADGE_XP_1000"],
+    "completedQuestIds": ["QUEST_DAILY_MODULE_1"],
+    "skills": [
+      { "skillId": "SKILL_JAVA_CORE", "skillName": "Core Java & Concurrency", "proficiencyLevel": "ADVANCED", "score": 88, "verified": true }
+    ]
+  }
+]

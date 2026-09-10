@@ -1,0 +1,64 @@
+[
+  {
+    "id": "ROLE_SR_BACKEND_ENG",
+    "title": "Senior Backend Engineer",
+    "category": "Backend",
+    "description": "Responsible for designing, building, and maintaining highly reliable distributed backend services and APIs at scale.",
+    "targetExperienceYears": 5,
+    "requiredSkills": [
+      { "skillId": "SKILL_JAVA_CORE", "skillName": "Core Java & Concurrency", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 5 },
+      { "skillId": "SKILL_SPRING_BOOT", "skillName": "Spring Boot & Spring Cloud", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 5 },
+      { "skillId": "SKILL_SQL_POSTGRES", "skillName": "PostgreSQL & Query Optimization", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_MICROSERVICES", "skillName": "Distributed Microservices Architecture", "minimumProficiency": "INTERMEDIATE", "minimumScore": 75, "weight": 4 },
+      { "skillId": "SKILL_KAFKA", "skillName": "Apache Kafka & Event-Driven Architecture", "minimumProficiency": "INTERMEDIATE", "minimumScore": 70, "weight": 4 },
+      { "skillId": "SKILL_DOCKER", "skillName": "Docker & Containerization", "minimumProficiency": "INTERMEDIATE", "minimumScore": 75, "weight": 3 },
+      { "skillId": "SKILL_TESTING_TDD", "skillName": "Test-Driven Development & Testcontainers", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 }
+    ]
+  },
+  {
+    "id": "ROLE_CLOUD_ARCHITECT",
+    "title": "Cloud Native Solutions Architect",
+    "category": "Architecture",
+    "description": "Leads enterprise cloud modernization, multi-region distributed system architectures, cost optimization, and resilience governance.",
+    "targetExperienceYears": 8,
+    "requiredSkills": [
+      { "skillId": "SKILL_AWS_CORE", "skillName": "AWS Cloud Architecture", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_KUBERNETES", "skillName": "Kubernetes & Cloud Orchestration", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 5 },
+      { "skillId": "SKILL_SYSTEM_DESIGN", "skillName": "Large-Scale Distributed System Design", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_MICROSERVICES", "skillName": "Distributed Microservices Architecture", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_KAFKA", "skillName": "Apache Kafka & Event-Driven Architecture", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_TERRAFORM", "skillName": "Terraform & Infrastructure as Code (IaC)", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_OAUTH_SECURITY", "skillName": "OAuth 2.1, OIDC & API Security", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_TECH_LEADERSHIP", "skillName": "Technical Leadership & System Governance", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 5 }
+    ]
+  },
+  {
+    "id": "ROLE_DEVOPS_LEAD",
+    "title": "Principal DevOps & Platform Engineer",
+    "category": "DevOps",
+    "description": "Architects internal developer platforms (IDP), zero-trust security postures, automated CI/CD release pipelines, and observability frameworks.",
+    "targetExperienceYears": 6,
+    "requiredSkills": [
+      { "skillId": "SKILL_KUBERNETES", "skillName": "Kubernetes & Cloud Orchestration", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_TERRAFORM", "skillName": "Terraform & Infrastructure as Code (IaC)", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_CICD_GITHUB", "skillName": "CI/CD & GitHub Actions Pipelines", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 5 },
+      { "skillId": "SKILL_DOCKER", "skillName": "Docker & Containerization", "minimumProficiency": "EXPERT", "minimumScore": 90, "weight": 4 },
+      { "skillId": "SKILL_AWS_CORE", "skillName": "AWS Cloud Architecture", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_OAUTH_SECURITY", "skillName": "OAuth 2.1, OIDC & API Security", "minimumProficiency": "INTERMEDIATE", "minimumScore": 75, "weight": 3 }
+    ]
+  },
+  {
+    "id": "ROLE_AI_SYSTEMS_ENG",
+    "title": "AI & Distributed Systems Engineer",
+    "category": "AI/ML",
+    "description": "Bridges enterprise backend services with large language models, retrieval augmented generation (RAG), and high-throughput vector pipelines.",
+    "targetExperienceYears": 5,
+    "requiredSkills": [
+      { "skillId": "SKILL_GENAI_LLM", "skillName": "GenAI Prompting & LLM Integration", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 5 },
+      { "skillId": "SKILL_JAVA_CORE", "skillName": "Core Java & Concurrency", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_SPRING_BOOT", "skillName": "Spring Boot & Spring Cloud", "minimumProficiency": "ADVANCED", "minimumScore": 80, "weight": 4 },
+      { "skillId": "SKILL_REDIS", "skillName": "Redis Caching & In-Memory Data Grids", "minimumProficiency": "INTERMEDIATE", "minimumScore": 75, "weight": 4 },
+      { "skillId": "SKILL_REST_API", "skillName": "RESTful API Design & OpenAPI", "minimumProficiency": "ADVANCED", "minimumScore": 85, "weight": 4 }
+    ]
+  }
+]

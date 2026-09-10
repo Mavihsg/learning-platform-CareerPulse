@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Pulse | Enterprise Learning Platform</title>
+    <meta name="description"
+        content="Enterprise continuous learning and career advancement platform with automated skill pathways, no-code course authoring, and organizational analytics.">
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+
+    <!-- App Stylesheets -->
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+
+<body>
+
+    <!-- =========================================================================
+         STARTUP AUTHENTICATION PORTAL (GATE)
+         ========================================================================= -->
+    <div class="auth-overlay" id="auth-modal" style="display: none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-brand-badge">CAREER PULSE</div>
+                <h2 class="auth-title" id="auth-main-title">Sign in to your account</h2>
+                <p class="auth-subtitle">Enterprise continuous learning and career advancement ecosystem</p>
+            </div>
+
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" id="tab-btn-signin" onclick="App.switchAuthTab('signin')">Sign
+                    In</button>
+                <button class="auth-tab-btn" id="tab-btn-register" onclick="App.switchAuthTab('register')">Create
+                    Account</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="auth-form-signin" onsubmit="App.handleLogin(event)" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label" for="auth-email">Work Email or User ID</label>
+                    <input type="text" id="auth-email" class="form-input" placeholder="manish.kessler@enterprise.io"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="auth-password">Password</label>
+                    <input type="password" id="auth-password" class="form-input" value="••••••••"
+                        placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn-primary btn-full-width" id="btn-submit-signin">
+                    Sign In to Portal
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="auth-form-register" onsubmit="App.handleRegister(event)" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label" for="reg-name">Full Name</label>
+                    <input type="text" id="reg-name" class="form-input" placeholder="e.g. Alex Morgan" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-email">Work Email</label>
+                    <input type="email" id="reg-email" class="form-input" placeholder="e.g. alex.morgan@enterprise.io"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-role">Current Role Title</label>
+                    <input type="text" id="reg-role" class="form-input" value="Software Engineer"
+                        placeholder="e.g. Associate Backend Developer">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="reg-track">Target Career Track</label>
+                    <select id="reg-track" class="form-select">
+                        <option value="ROLE_SR_BACKEND_ENG">Senior Backend Developer</option>
+                        <option value="ROLE_CLOUD_ARCHITECT">Cloud Solutions Architect</option>
+                        <option value="ROLE_DATA_ENGINEER">Senior Data Engineer</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary btn-full-width" id="btn-submit-reg">
+                    Create Learner Profile
+                </button>
+            </form>
+
+            <!-- Google Sign-In Section -->
+            <div class="google-signin-section">
+                <div class="auth-divider">
+                    <span class="auth-divider-text">OR</span>
+                </div>
+                <button type="button" class="btn-google-signin" id="btn-google-signin" onclick="App.initGoogleSignIn()">
+                    <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                            fill="#4285F4" />
+                        <path
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            fill="#34A853" />
+                        <path
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            fill="#FBBC05" />
+                        <path
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            fill="#EA4335" />
+                    </svg>
+                    Sign in with Google
+                </button>
+            </div>
+
+            <!-- Quick Demo Profile Switcher -->
+            <div class="quick-demo-section">
+                <span class="quick-demo-title">OR QUICK SIGN-IN AS DEMO USER:</span>
+                <div class="quick-demo-grid">
+                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_1')">
+                        <span class="demo-user-name">Shivam Gupta</span>
+                        <span class="demo-user-role">Junior Data Eng (38%)</span>
+                    </button>
+                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_2')">
+                        <span class="demo-user-name">Isha Agarwal</span>
+                        <span class="demo-user-role">Mid Backend (85%)</span>
+                    </button>
+                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_4')">
+                        <span class="demo-user-name">Nikhil Khanna</span>
+                        <span class="demo-user-role">Staff Architect (100%)</span>
+                    </button>
+                    <button type="button" class="demo-user-chip" onclick="App.quickLogin('user_3')">
+                        <span class="demo-user-name">Pulkit Jain</span>
+                        <span class="demo-user-role">Associate Cloud (20%)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MAIN APPLICATION LAYOUT
+         ========================================================================= -->
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-brand" onclick="App.navigate('dashboard'); return false;">
+                    <div class="brand-title">CAREER PULSE</div>
+                    <div class="brand-sub">LEARNING & ADVANCEMENT</div>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- LEARN Section -->
+                <div class="nav-group">
+                    <span class="nav-group-title">LEARN</span>
+                    <button class="nav-item active" id="nav-dashboard" onclick="App.navigate('dashboard')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect width="7" height="9" x="3" y="3" rx="1" />
+                            <rect width="7" height="5" x="14" y="3" rx="1" />
+                            <rect width="7" height="9" x="14" y="12" rx="1" />
+                            <rect width="7" height="5" x="3" y="16" rx="1" />
+                        </svg>
+                        <span>Dashboard</span>
+                    </button>
+                    <button class="nav-item" id="nav-catalog" onclick="App.navigate('catalog')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                            <path d="M6 6h10" />
+                            <path d="M6 10h10" />
+                        </svg>
+                        <span>Catalog</span>
+                    </button>
+                    <button class="nav-item" id="nav-my-learning" onclick="App.navigate('my-learning')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                        <span>My Learning</span>
+                    </button>
+                    <button class="nav-item" id="nav-plan" onclick="App.navigate('plan')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" />
+                            <path d="m9 14 2 2 4-4" />
+                        </svg>
+                        <span>Plan overview</span>
+                    </button>
+                    <button class="nav-item" id="nav-leaderboard" onclick="App.navigate('leaderboard')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                            <path d="M4 22h16" />
+                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                        </svg>
+                        <span>Leaderboard</span>
+                    </button>
+                    <button class="nav-item" id="nav-quiz-arena" onclick="App.navigate('quiz-arena')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
+                        <span>Quiz Arena</span>
+                        <span class="quiz-nav-chip">AI</span>
+                    </button>
+                    <button class="nav-item" id="nav-discussions" onclick="App.navigate('discussions')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Discussions</span>
+                        <span class="quiz-nav-chip" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">Forum</span>
+                    </button>
+                </div>
+
+                <!-- AUTHOR Section -->
+                <div class="nav-group">
+                    <span class="nav-group-title">AUTHOR</span>
+                    <button class="nav-item" id="nav-builder" onclick="App.navigate('builder')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                        <span>Plan builder</span>
+                    </button>
+                    <button class="nav-item" id="nav-my-courses" onclick="App.navigate('my-courses')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect width="20" height="14" x="2" y="5" rx="2" />
+                            <line x1="2" x2="22" y1="10" y2="10" />
+                        </svg>
+                        <span>My Courses</span>
+                    </button>
+                </div>
+
+                <!-- MANAGE Section -->
+                <div class="nav-group">
+                    <!-- <span class="nav-group-title">MANAGE</span> -->
+                    <!-- <button class="nav-item" id="nav-team" onclick="App.navigate('team')">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg> -->
+                    <!-- <span>Team view</span> -->
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Bottom User Profile Card (clickable → opens profile page) -->
+            <div class="sidebar-footer">
+                <button class="user-profile-pill-btn" id="nav-profile" onclick="App.navigate('profile')"
+                    title="View your profile">
+                    <img id="sidebar-avatar" class="user-avatar"
+                        src="https://api.dicebear.com/7.x/bottts/svg?seed=Shivam" alt="User Avatar">
+                    <div class="user-info-text">
+                        <div class="user-name" id="sidebar-user-name">Shivam Gupta</div>
+                        <div class="user-role" id="sidebar-user-role">Junior Data Engineer</div>
+                    </div>
+                    <svg class="sidebar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Area -->
+        <div class="app-main-wrapper">
+            <!-- Top App Header -->
+            <header class="app-top-header">
+                <div class="header-left">
+                    <span class="header-breadcrumb" id="header-breadcrumb">OVERVIEW</span>
+                </div>
+
+                <div class="header-right">
+                    <!-- Interactive Level Pill (Opens XP & Streak Modal) -->
+                    <div class="hud-item hud-level-wrapper">
+                        <button class="hud-level-btn" id="btn-level-modal" onclick="App.toggleLevelModal()" title="Click to view XP Progression & Streak">
+                            <span class="hud-level-pill" id="hud-level-val">LVL 2 · APPRENTICE</span>
+                            <svg class="hud-level-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Core Track Quick CTA -->
+                    <div class="core-track-cta">
+                        <span class="core-pct-text" id="header-core-pct">38%</span>
+                        <span class="core-track-label">CORE TRACK</span>
+                        <button class="btn-resume-header" onclick="App.navigate('plan')">Resume lesson</button>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle Light / Dark Mode"
+                        aria-label="Toggle Theme">
+                        <svg id="theme-icon-svg" class="nav-svg-icon" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2" />
+                            <path d="M12 20v2" />
+                            <path d="m4.93 4.93 1.41 1.41" />
+                            <path d="m17.66 17.66 1.41 1.41" />
+                            <path d="M2 12h2" />
+                            <path d="M20 12h2" />
+                            <path d="m6.34 17.66-1.41 1.41" />
+                            <path d="m19.07 4.93-1.41 1.41" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dynamic Viewport Body -->
+            <main class="viewport-body">
+
+                <!-- =========================================================
+                     VIEW 1: LEARNER DASHBOARD (HOME)
+                     ========================================================= -->
+                <section class="view-panel active" id="view-dashboard">
+                    <div class="page-header">
+                        <h1 class="page-title" id="dash-greeting">Good afternoon, Shivam</h1>
+                        <p class="page-subtitle" id="dash-subtitle">Five lessons behind you this week. One module left
+                            before the capstone.</p>
+                    </div>
+
+                    <!-- Dashboard Main Grid -->
+                    <div class="dash-grid">
+                        <!-- Top Left: Core Track Hero Card -->
+                        <div class="card card-core-track">
+                            <div class="card-header-row">
+                                <span class="tag-plan-category" id="dash-core-plan-tag">PLAN 01 / CORE TRACK</span>
+                                <span class="badge-pct-pill" id="dash-core-pct-badge">38% complete</span>
+                            </div>
+
+                            <h2 class="core-course-title" id="dash-core-title">Applied Data Engineering</h2>
+                            <p class="core-course-sub" id="dash-core-sub">4 modules · 13 lessons · 6 h remaining</p>
+
+                            <div class="core-metrics-row">
+                                <!-- Donut Progress Circle -->
+                                <div class="donut-wrapper">
+                                    <svg class="donut-svg" viewBox="0 0 100 100">
+                                        <circle class="donut-bg" cx="50" cy="50" r="40"></circle>
+                                        <circle class="donut-fill" id="dash-donut-fill" cx="50" cy="50" r="40"
+                                            stroke-dasharray="251.2" stroke-dashoffset="155.7"></circle>
+                                    </svg>
+                                    <div class="donut-text" id="dash-donut-text">38%</div>
+                                </div>
+
+                                <!-- Key Stats Grid -->
+                                <div class="stats-mini-grid">
+                                    <div class="stat-mini-box">
+                                        <div class="stat-val" id="dash-stat-lessons">5/13</div>
+                                        <div class="stat-lbl">LESSONS DONE</div>
+                                    </div>
+                                    <div class="stat-mini-box">
+                                        <div class="stat-val" id="dash-stat-time">2 h</div>
+                                        <div class="stat-lbl">TIME LOGGED</div>
+                                    </div>
+                                    <div class="stat-mini-box">
+                                        <div class="stat-val" id="dash-stat-streak">12</div>
+                                        <div class="stat-lbl">DAY STREAK</div>
+                                    </div>
+                                    <div class="stat-mini-box">
+                                        <div class="stat-val" id="dash-stat-plans">4</div>
+                                        <div class="stat-lbl">PLANS ENROLLED</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- "Up Next" Focus Card -->
+                            <div class="up-next-card">
+                                <div class="up-next-info">
+                                    <div class="up-next-tag">UP NEXT</div>
+                                    <div class="up-next-title" id="dash-upnext-title">Build a daily ingest</div>
+                                    <div class="up-next-meta" id="dash-upnext-meta">Pipelines · Project · 90 min</div>
+                                </div>
+                                <button class="btn-open-upnext" onclick="App.openUpNextLesson()">Open</button>
+                            </div>
+                        </div>
+
+                        <!-- Top Right: Weekly Activity Bar Chart Card -->
+                        <div class="card card-weekly-chart">
+                            <div class="card-header-row">
+                                <span class="chart-title">THIS WEEK</span>
+                            </div>
+
+                            <div class="chart-bars-container" id="weekly-bars-container">
+                                <!-- Populated dynamically by app.js -->
+                            </div>
+
+                            <div class="chart-caption" id="weekly-chart-caption">
+                                250 of 240 minutes logged. Target met on Friday.
+                            </div>
+                        </div>
+
+                        <!-- Bottom Right: Company Leaderboard Mini Widget (Top 3 + Active User) -->
+                        <div class="card card-mini-leaderboard">
+                            <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="chart-title">COMPANY LEADERBOARD</span>
+                                <button type="button" class="btn-text-link" onclick="App.navigate('leaderboard')" style="font-size: 0.78rem; color: var(--primary-accent); background: none; border: none; cursor: pointer; font-weight: 600; padding: 0;">
+                                    View All Standings →
+                                </button>
+                            </div>
+
+                            <div class="mini-leaderboard-list" id="mini-leaderboard-list">
+                                <!-- Populated dynamically by app.js: Top 3 rankers + active user highlighted -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 2: COURSE CATALOG
+                     ========================================================= -->
+                <section class="view-panel" id="view-catalog">
+                    <div class="page-header">
+                        <h1 class="page-title">Course Catalog & Learning Plans</h1>
+                        <p class="page-subtitle">Structured career curricula with lessons, interactive material, and
+                            instant enrolment.</p>
+                    </div>
+
+                    <div class="catalog-filters">
+                        <button class="filter-chip active" onclick="App.filterCatalog('ALL', this)">All Tracks</button>
+                        <button class="filter-chip" id="catalog-chip-completed" onclick="App.filterCatalog('COMPLETED', this)">✓ Completed</button>
+                        <button class="filter-chip" onclick="App.filterCatalog('Data', this)">Data Engineering</button>
+                        <button class="filter-chip" onclick="App.filterCatalog('Backend', this)">Backend &
+                            Cloud</button>
+                        <button class="filter-chip" onclick="App.filterCatalog('Platform', this)">Platform</button>
+                    </div>
+
+                    <div class="course-grid" id="catalog-course-grid">
+                        <!-- Populated dynamically via API -->
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW: MY LEARNING (ENROLLED COURSES)
+                     ========================================================= -->
+                <section class="view-panel" id="view-my-learning">
+                    <div class="page-header">
+                        <div class="page-header-row">
+                            <div>
+                                <h1 class="page-title">My Learning</h1>
+                                <p class="page-subtitle">Track your enrolled courses, view all completed lessons, and celebrate your certified milestones.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Learning KPI Summary Strip -->
+                    <div class="my-learning-kpi-bar">
+                        <div class="card my-learning-kpi-card">
+                            <span class="kpi-label">COMPLETED COURSES</span>
+                            <strong class="kpi-val text-success" id="my-learning-kpi-completed">1</strong>
+                            <span class="kpi-sub">100% finished</span>
+                        </div>
+                        <div class="card my-learning-kpi-card">
+                            <span class="kpi-label">IN PROGRESS</span>
+                            <strong class="kpi-val text-brand" id="my-learning-kpi-inprogress">3</strong>
+                            <span class="kpi-sub">Active plans</span>
+                        </div>
+                        <div class="card my-learning-kpi-card">
+                            <span class="kpi-label">COMPLETED LESSONS</span>
+                            <strong class="kpi-val" id="my-learning-kpi-lessons">7</strong>
+                            <span class="kpi-sub">Total units mastered</span>
+                        </div>
+                        <div class="card my-learning-kpi-card">
+                            <span class="kpi-label">HOURS INVESTED</span>
+                            <strong class="kpi-val" id="my-learning-kpi-hours">8.5 h</strong>
+                            <span class="kpi-sub">Curriculum time</span>
+                        </div>
+                    </div>
+
+                    <!-- Filter Chips -->
+                    <div class="my-learning-filters-bar">
+                        <div class="filter-group">
+                            <button class="filter-chip active" id="filter-chip-all" onclick="App.filterMyLearning('all')">
+                                All Courses (<span id="count-chip-all">0</span>)
+                            </button>
+                            <button class="filter-chip" id="filter-chip-completed" onclick="App.filterMyLearning('completed')">
+                                ✓ Completed (100%) (<span id="count-chip-completed">0</span>)
+                            </button>
+                            <button class="filter-chip" id="filter-chip-inprogress" onclick="App.filterMyLearning('inprogress')">
+                                In Progress (<span id="count-chip-inprogress">0</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- My Learning Grid -->
+                    <div class="my-learning-cards-grid" id="my-learning-grid">
+                        <!-- Populated dynamically by app.js -->
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 3: PLAN OVERVIEW (COURSE DETAILS & LESSONS)
+                     ========================================================= -->
+                <section class="view-panel" id="view-plan">
+                    <div class="plan-overview-header">
+                        <div>
+                            <span class="plan-badge-tag" id="plan-track-tag">PLAN 01</span>
+                            <h1 class="plan-hero-title" id="plan-hero-title">Applied Data Engineering</h1>
+                            <p class="plan-hero-desc" id="plan-hero-desc">Four modules, thirteen lessons. Mark lessons
+                                complete as you finish them.</p>
+                        </div>
+                        <div class="plan-header-action">
+                            <div class="core-track-cta">
+                                <span class="core-pct-text" id="plan-core-pct">38%</span>
+                                <span class="core-track-label">CORE TRACK</span>
+                                <button class="btn-resume-header" onclick="App.resumeFirstIncompleteLesson()">Resume
+                                    lesson</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-layout-grid">
+                        <!-- Left Column: Module & Lessons Tree -->
+                        <div class="modules-tree" id="modules-tree-container">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+
+                        <!-- Right Column: Plan Summary Sidebar -->
+                        <aside class="plan-summary-sidebar">
+                            <div class="card card-summary-box">
+                                <h3 class="summary-heading">PLAN SUMMARY</h3>
+                                <div class="summary-row">
+                                    <span>Format</span>
+                                    <strong>Modules</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Lessons</span>
+                                    <strong id="plan-summary-total">13</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Completed</span>
+                                    <strong id="plan-summary-done">5</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Time remaining</span>
+                                    <strong id="plan-summary-time">6 h</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Target date</span>
+                                    <strong id="plan-summary-date">12 Nov 2026</strong>
+                                </div>
+
+                                <button class="btn-primary btn-full-width" onclick="App.resumeFirstIncompleteLesson()">
+                                    Continue where I left off
+                                </button>
+                            </div>
+
+                            <!-- Styled Geometric Plan Cover Image Container -->
+                            <div class="plan-cover-box">
+                                <div class="cover-stripe-pattern"></div>
+                                <span class="cover-label">PLAN COVER OVERVIEW</span>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 4: PLAN BUILDER (NO-CODE SCHOLAR STUDIO)
+                     ========================================================= -->
+                <section class="view-panel" id="view-builder">
+                    <div class="page-header">
+                        <span class="plan-badge-tag" id="builder-mode-tag">DRAFT</span>
+                        <h1 class="page-title" id="builder-heading-title">Plan builder</h1>
+                        <p class="page-subtitle">Add modules and lessons, configure video/reading materials, then
+                            publish.</p>
+                    </div>
+
+                    <div class="builder-layout-grid">
+                        <!-- Left Column: Form & Dynamic Module Creator -->
+                        <div class="builder-form-column">
+                            <!-- AI Assistant Prompt -->
+                            <div class="card card-ai-prompt">
+                                <div class="ai-prompt-header">
+                                    <svg class="ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" width="20" height="20">
+                                        <path
+                                            d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z" />
+                                        <circle cx="9" cy="14" r="1" />
+                                        <circle cx="15" cy="14" r="1" />
+                                        <path d="M9 18h6" />
+                                    </svg>
+                                    <span class="ai-prompt-title">AI Plan Builder</span>
+                                    <span class="ai-badge">Powered by Gemini</span>
+                                </div>
+                                <div class="ai-prompt-body">
+                                    <input type="text" id="ai-prompt-input" class="form-input ai-input"
+                                        placeholder="Describe what you want to learn... e.g. 'I want to learn Java'"
+                                        onkeydown="if(event.key==='Enter') App.generateAiPlan()">
+                                    <button class="btn-ai-generate" id="btn-ai-generate" onclick="App.generateAiPlan()">
+                                        <span id="ai-btn-text">Generate with AI</span>
+                                        <div class="ai-spinner" id="ai-spinner" style="display: none;"></div>
+                                    </button>
+                                </div>
+                                <div class="ai-udemy-results" id="ai-udemy-results" style="display: none;">
+                                    <h4 class="ai-udemy-title">Recommended Certifications</h4>
+                                    <div id="ai-udemy-list"></div>
+                                </div>
+                                <div class="ai-udemy-results" id="ai-youtube-results"
+                                    style="display: none; margin-top: 1rem;">
+                                    <h4 class="ai-udemy-title">Free Resources</h4>
+                                    <div id="ai-youtube-list"></div>
+                                </div>
+                            </div>
+
+                            <div class="card card-builder-meta">
+                                <div class="form-row-2col">
+                                    <div class="form-group">
+                                        <label for="builder-plan-title" class="form-label">Plan title</label>
+                                        <input type="text" id="builder-plan-title" class="form-input"
+                                            value="Platform Engineering Fundamentals">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="builder-plan-track" class="form-label">Track</label>
+                                        <input type="text" id="builder-plan-track" class="form-input" value="Data">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Module Cards Container -->
+                            <div class="builder-modules-list" id="builder-modules-list">
+                                <!-- Populated dynamically by app.js -->
+                            </div>
+
+                            <!-- Add Module Button -->
+                            <button class="btn-add-module-dashed" onclick="App.addBuilderModule()">
+                                + Add module
+                            </button>
+                        </div>
+
+                        <!-- Right Column: Roll-Up & Resource Types Sidebar -->
+                        <aside class="builder-sidebar">
+                            <div class="card card-rollup-box">
+                                <h3 class="summary-heading">ROLL-UP</h3>
+                                <div class="summary-row">
+                                    <span>Modules</span>
+                                    <strong id="builder-rollup-modules">2</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Lessons</span>
+                                    <strong id="builder-rollup-lessons">4</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Estimated time</span>
+                                    <strong id="builder-rollup-time">1.8 h</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Status</span>
+                                    <strong id="builder-rollup-status">Draft</strong>
+                                </div>
+
+                                <button class="btn-primary btn-full-width" id="btn-publish-plan"
+                                    onclick="App.publishPlan()">
+                                    Publish plan
+                                </button>
+                            </div>
+
+                            <div class="card card-resources-guide">
+                                <h3 class="summary-heading">RESOURCE TYPES</h3>
+                                <div class="resource-type-item">
+                                    <strong>Video</strong>
+                                    <span>Embed URL or MP4</span>
+                                </div>
+                                <div class="resource-type-item">
+                                    <strong>Reading</strong>
+                                    <span>Markdown / Code</span>
+                                </div>
+                                <div class="resource-type-item">
+                                    <strong>Link</strong>
+                                    <span>External URL</span>
+                                </div>
+                                <div class="resource-type-item">
+                                    <strong>Exercise</strong>
+                                    <span>Interactive Checklist</span>
+                                </div>
+                                <div class="resource-type-item">
+                                    <strong>Project</strong>
+                                    <span>Capstone / Ingest</span>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 5: MY COURSES MANAGEMENT STUDIO
+                     ========================================================= -->
+                <section class="view-panel" id="view-my-courses">
+                    <div class="page-header"
+                        style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h1 class="page-title">My Created Courses</h1>
+                            <p class="page-subtitle">Manage, edit modules, and monitor all courses authored by you.</p>
+                        </div>
+                        <button class="btn-primary" onclick="App.createNewCoursePlan()">
+                            + Create New Course
+                        </button>
+                    </div>
+
+                    <div class="card table-card">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Course Plan</th>
+                                        <th>Track</th>
+                                        <th>Modules</th>
+                                        <th>Lessons</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                        <th style="text-align: right;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="my-courses-table-body">
+                                    <!-- Populated dynamically via API -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 6: TEAM VIEW & USER ANALYTICS
+                     ========================================================= -->
+                <section class="view-panel" id="view-team">
+                    <div class="page-header">
+                        <h1 class="page-title">Team & User Analytics</h1>
+                        <p class="page-subtitle">Track learning velocity, core track progress, and streak consistency
+                            across all employees.</p>
+                    </div>
+
+                    <!-- Team KPI Cards Row -->
+                    <div class="team-kpi-row">
+                        <div class="card kpi-card">
+                            <div class="kpi-label">ACTIVE LEARNERS</div>
+                            <div class="kpi-val" id="team-kpi-learners">5</div>
+                            <div class="kpi-sub">100% platform adoption</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">AVG COMPLETION RATE</div>
+                            <div class="kpi-val" id="team-kpi-avg-pct">60.6%</div>
+                            <div class="kpi-sub">Across all core tracks</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">TOTAL HOURS LOGGED</div>
+                            <div class="kpi-val" id="team-kpi-hours">166 h</div>
+                            <div class="kpi-sub">This quarter</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">ACTIVE STREAKS</div>
+                            <div class="kpi-val" id="team-kpi-streaks">4</div>
+                            <div class="kpi-sub">> 3 consecutive days</div>
+                        </div>
+                    </div>
+
+                    <!-- Team Members Table Card -->
+                    <div class="card table-card">
+                        <div class="card-header-row">
+                            <h3 class="section-title">Learner Progress Directory</h3>
+                            <span class="badge-status-on-track">5 Employees Enrolled</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Learner</th>
+                                        <th>Role</th>
+                                        <th>Core Track Plan</th>
+                                        <th>Progress</th>
+                                        <th>Lessons Done</th>
+                                        <th>Streak</th>
+                                        <th>Hours</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="team-table-body">
+                                    <!-- Populated dynamically via API -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 7: USER PROFILE
+                     ========================================================= -->
+                <section class="view-panel" id="view-profile">
+                    <div class="profile-page-layout">
+                        <!-- Profile Header Card -->
+                        <div class="card profile-header-card">
+                            <div class="profile-header-content">
+                                <img id="profile-avatar" class="profile-avatar-lg"
+                                    src="https://api.dicebear.com/7.x/bottts/svg?seed=Shivam" alt="Profile Avatar">
+                                <div class="profile-header-info">
+                                    <h1 class="profile-name" id="profile-name">Shivam Gupta</h1>
+                                    <p class="profile-role-title" id="profile-role-title">Junior Data Engineer</p>
+                                    <p class="profile-email" id="profile-email">shivam.gupta@enterprise.io</p>
+                                </div>
+                            </div>
+                            <div class="profile-header-actions" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                <div class="profile-switcher-pill" style="display: inline-flex; gap: 0.35rem; background: var(--bg-surface-2, rgba(255,255,255,0.05)); padding: 0.3rem 0.6rem; border-radius: 999px; border: 1px solid var(--border-color, rgba(255,255,255,0.1)); align-items: center;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: 0.25rem;">Switch Demo:</span>
+                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_1')">Shivam</button>
+                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_2')">Isha</button>
+                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_3')">Pulkit</button>
+                                    <button type="button" class="btn-sm" style="padding: 0.2rem 0.55rem; font-size: 0.75rem; border-radius: 999px; cursor: pointer;" onclick="App.quickLogin('user_4')">Nikhil</button>
+                                </div>
+                                <button class="btn-signout-profile" onclick="App.signOut()">
+                                    <svg class="nav-svg-icon" style="width: 14px; height: 14px;" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                        <polyline points="16 17 21 12 16 7" />
+                                        <line x1="21" x2="9" y1="12" y2="12" />
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Profile Stats Grid -->
+                        <div class="profile-stats-row">
+                            <div class="card profile-stat-card">
+                                <div class="kpi-label">LEVEL</div>
+                                <div class="kpi-val" id="profile-level">LVL 2</div>
+                                <div class="kpi-sub" id="profile-level-title">Apprentice</div>
+                            </div>
+                            <div class="card profile-stat-card">
+                                <div class="kpi-label">TOTAL XP</div>
+                                <div class="kpi-val" id="profile-xp">480</div>
+                                <div class="kpi-sub">Lifetime points</div>
+                            </div>
+                            <div class="card profile-stat-card">
+                                <div class="kpi-label">STUDY STREAK</div>
+                                <div class="kpi-val" id="profile-streak">12d</div>
+                                <div class="kpi-sub">Consecutive days</div>
+                            </div>
+                            <div class="card profile-stat-card">
+                                <div class="kpi-label">CORE TRACK</div>
+                                <div class="kpi-val" id="profile-core-pct">38%</div>
+                                <div class="kpi-sub" id="profile-core-title">Applied Data Engineering</div>
+                            </div>
+                        </div>
+
+                        <!-- Profile Details -->
+                        <div class="profile-details-grid">
+                            <div class="card profile-detail-card">
+                                <h3 class="summary-heading">ACCOUNT DETAILS</h3>
+                                <div class="summary-row">
+                                    <span>Full Name</span>
+                                    <strong id="profile-detail-name">Shivam Gupta</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Email</span>
+                                    <strong id="profile-detail-email">shivam.gupta@enterprise.io</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Current Role</span>
+                                    <strong id="profile-detail-role">Junior Data Engineer</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Target Role</span>
+                                    <strong id="profile-detail-target">Senior Data Engineer</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Member Since</span>
+                                    <strong id="profile-detail-since">September 2026</strong>
+                                </div>
+                            </div>
+
+                            <div class="card profile-detail-card">
+                                <h3 class="summary-heading">LEARNING PROGRESS</h3>
+                                <div class="summary-row">
+                                    <span>Lessons Completed</span>
+                                    <strong id="profile-lessons-done">5 / 13</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Plans Enrolled</span>
+                                    <strong id="profile-plans-enrolled">4</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Hours Logged</span>
+                                    <strong id="profile-hours">2 h</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Courses Authored</span>
+                                    <strong id="profile-courses-authored">0</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Badges Earned</span>
+                                    <strong id="profile-badges">2</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Completed Courses History in Profile -->
+                        <div class="card profile-completed-history-card">
+                            <div class="completed-history-header">
+                                <div>
+                                    <h3 class="summary-heading">COMPLETED COURSES & CERTIFICATIONS</h3>
+                                    <p class="section-subtext">Courses where you've achieved 100% curriculum completion.</p>
+                                </div>
+                                <button class="btn-secondary btn-sm" onclick="App.navigate('my-learning')">View All in My Learning →</button>
+                            </div>
+                            <div class="profile-completed-courses-list" id="profile-completed-courses-list">
+                                <!-- Populated dynamically by app.js -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 8: COMPANY LEADERBOARDS
+                     ========================================================= -->
+                <section class="view-panel" id="view-leaderboard">
+                    <div class="page-header">
+                        <div class="page-header-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <h1 class="page-title">Company Leaderboards</h1>
+                                <p class="page-subtitle">Top learners of the week based on XP earned to encourage healthy team competition.</p>
+                            </div>
+                            <div class="leaderboard-header-badge" style="display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-surface-2); padding: 0.45rem 0.9rem; border-radius: 999px; border: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">
+                                <span>⏱️</span>
+                                <span id="leaderboard-reset-countdown">Resets Sunday midnight</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeframe Filter Chips -->
+                    <div class="leaderboard-timeframe-bar" style="display: flex; gap: 0.6rem; margin-bottom: 1.5rem;">
+                        <button class="filter-chip active" id="timeframe-chip-WEEKLY" onclick="App.switchLeaderboardTab('WEEKLY')">🔥 This Week (Active Race)</button>
+                        <button class="filter-chip" id="timeframe-chip-ALL_TIME" onclick="App.switchLeaderboardTab('ALL_TIME')">👑 All-Time Legends</button>
+                        <button class="filter-chip" id="timeframe-chip-STREAK" onclick="App.switchLeaderboardTab('STREAK')">⚡ Streak Titans</button>
+                    </div>
+
+                    <!-- Top 3 Interactive 3D Podium -->
+                    <div class="podium-section" id="leaderboard-podium-section">
+                        <!-- Injected dynamically by App.renderLeaderboard -->
+                    </div>
+
+                    <!-- Personalized Standing Banner -->
+                    <div class="your-standing-card" id="leaderboard-your-standing" style="display: none;">
+                        <!-- Injected dynamically by App.renderLeaderboard -->
+                    </div>
+
+                    <!-- Full Rankings List / Table -->
+                    <div class="card leaderboard-table-card">
+                        <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="chart-title">FULL STANDINGS</span>
+                            <span class="table-meta-note" id="leaderboard-total-count" style="font-size: 0.78rem; color: var(--text-muted);">5 learners competing</span>
+                        </div>
+                        <div class="leaderboard-list-container" id="leaderboard-list-container">
+                            <!-- Injected dynamically by App.renderLeaderboard -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 9: AI QUIZ ARENA & DAILY CHALLENGES
+                     ========================================================= -->
+                <section class="view-panel" id="view-quiz-arena">
+                    <!-- Arena Header -->
+                    <div class="page-header">
+                        <div class="page-header-row" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <h1 class="page-title">AI Quiz Arena & Daily Challenge</h1>
+                                <p class="page-subtitle">Reinforce what you've learned from completed courses or generate custom technical quizzes on any topic.</p>
+                            </div>
+                            <div class="arena-streak-badge">
+                                <span class="arena-streak-flame">🔥</span>
+                                <div class="arena-streak-info">
+                                    <span class="arena-streak-val" id="arena-streak-count">12 Day Streak</span>
+                                    <span class="arena-streak-shield" id="arena-shield-count">🛡️ 1 Shield Available</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Challenge Hero Banner -->
+                    <div class="card card-daily-challenge" id="arena-daily-hero">
+                        <div class="daily-hero-left">
+                            <div class="daily-flame-icon">🔥</div>
+                            <div class="daily-hero-text">
+                                <div class="daily-hero-tag">FEATURED DAILY CHALLENGE</div>
+                                <h2 class="daily-hero-title">Daily Knowledge Sprint (3 Questions)</h2>
+                                <p class="daily-hero-sub">Complete today's quick architectural challenge to extend your active streak and claim <strong>+75 XP</strong>!</p>
+                            </div>
+                        </div>
+                        <div class="daily-hero-right">
+                            <button class="btn-primary btn-daily-launch" id="btn-start-daily" onclick="App.startDailyQuiz()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                                <span>Start Daily Quiz (+75 XP)</span>
+                            </button>
+                            <span class="daily-status-indicator" id="arena-daily-status">Ready to test today's streak</span>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Configuration & Creator Deck -->
+                    <div class="quiz-deck-container" id="arena-config-deck">
+                        <!-- Mode Selector Tabs -->
+                        <div class="quiz-mode-nav">
+                            <button class="quiz-mode-btn active" id="mode-tab-courses" onclick="App.switchQuizMode('courses')">
+                                <span class="quiz-mode-icon">🎓</span>
+                                <span>Completed Courses Mastery</span>
+                            </button>
+                            <button class="quiz-mode-btn" id="mode-tab-custom" onclick="App.switchQuizMode('custom')">
+                                <span class="quiz-mode-icon">⚡</span>
+                                <span>Custom Topic Explorer</span>
+                            </button>
+                        </div>
+
+                        <!-- Mode 1 Panel: Completed Courses -->
+                        <div class="card quiz-config-card" id="mode-panel-courses">
+                            <div class="quiz-config-header">
+                                <div>
+                                    <h3 class="quiz-card-title">Test Your Retained Course Knowledge</h3>
+                                    <p class="quiz-card-desc">Select one or more of your finished courses to challenge yourself on concepts, architectures, and real-world trade-offs covered in your curriculum.</p>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="form-label">Select Completed Courses to Include:</label>
+                                <div class="completed-courses-picker" id="quiz-completed-courses-list">
+                                    <!-- Injected dynamically by App.loadQuizArena() -->
+                                </div>
+                            </div>
+
+                            <div class="quiz-controls-row">
+                                <div class="quiz-control-group">
+                                    <label class="form-label" for="quiz-courses-count">Questions:</label>
+                                    <select id="quiz-courses-count" class="form-select quiz-select">
+                                        <option value="3">3 Questions (Quick Sprint)</option>
+                                        <option value="5" selected>5 Questions (Standard)</option>
+                                        <option value="10">10 Questions (Mastery Deep-Dive)</option>
+                                    </select>
+                                </div>
+                                <div class="quiz-control-group">
+                                    <label class="form-label" for="quiz-courses-difficulty">Difficulty:</label>
+                                    <select id="quiz-courses-difficulty" class="form-select quiz-select">
+                                        <option value="BEGINNER">Beginner (Foundations)</option>
+                                        <option value="INTERMEDIATE" selected>Intermediate (Production)</option>
+                                        <option value="ADVANCED">Advanced (Architecture & Edge Cases)</option>
+                                    </select>
+                                </div>
+                                <div class="quiz-control-action">
+                                    <button class="btn-primary btn-generate-quiz" id="btn-gen-courses-quiz" onclick="App.generateCompletedCoursesQuiz()">
+                                        <span>⚡ Generate AI Quiz</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mode 2 Panel: Custom Topic -->
+                        <div class="card quiz-config-card" id="mode-panel-custom" style="display: none;">
+                            <div class="quiz-config-header">
+                                <div>
+                                    <h3 class="quiz-card-title">Explore Any Software Engineering Topic</h3>
+                                    <p class="quiz-card-desc">Type any technical topic, system design pattern, or programming framework to generate an on-demand AI quiz.</p>
+                                </div>
+                            </div>
+
+                            <!-- Quick Preset Topic Chips -->
+                            <div class="quick-topics-wrapper" style="margin-top: 1rem;">
+                                <span class="form-label" style="display: block; margin-bottom: 0.5rem;">Popular Topic Inspirations:</span>
+                                <div class="quick-topic-chips">
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('Kubernetes Production Patterns & Service Meshes')">☸️ Kubernetes & Service Meshes</button>
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('PostgreSQL Indexing & MVCC Optimization')">🐘 Postgres & MVCC</button>
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('Distributed Consensus & Raft Algorithm')">🔄 Consensus & Raft</button>
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('Spring Boot 3 Virtual Threads & Microservices')">🍃 Spring Boot 3 & Loom</button>
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('System Design & High Availability Architectures')">🏛️ System Design & HA</button>
+                                    <button type="button" class="quick-topic-chip" onclick="App.selectQuizTopic('Resilience Patterns: Circuit Breakers & Rate Limiting')">🛡️ Resilience & Circuit Breakers</button>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 1.25rem;">
+                                <label class="form-label" for="quiz-custom-topic-input">Target Topic or Framework:</label>
+                                <input type="text" id="quiz-custom-topic-input" class="form-input" placeholder="e.g., Docker multi-stage builds, Kafka partition keys, CAP theorem..." />
+                            </div>
+
+                            <div class="quiz-controls-row">
+                                <div class="quiz-control-group">
+                                    <label class="form-label" for="quiz-custom-count">Questions:</label>
+                                    <select id="quiz-custom-count" class="form-select quiz-select">
+                                        <option value="3">3 Questions</option>
+                                        <option value="5" selected>5 Questions</option>
+                                        <option value="10">10 Questions</option>
+                                    </select>
+                                </div>
+                                <div class="quiz-control-group">
+                                    <label class="form-label" for="quiz-custom-difficulty">Difficulty:</label>
+                                    <select id="quiz-custom-difficulty" class="form-select quiz-select">
+                                        <option value="BEGINNER">Beginner</option>
+                                        <option value="INTERMEDIATE" selected>Intermediate</option>
+                                        <option value="ADVANCED">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="quiz-control-action">
+                                    <button class="btn-primary btn-generate-quiz" id="btn-gen-custom-quiz" onclick="App.generateCustomTopicQuiz()">
+                                        <span>⚡ Generate AI Quiz</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Quiz Player -->
+                    <div class="card quiz-player-card" id="arena-player" style="display: none;">
+                        <!-- Player Top Bar -->
+                        <div class="player-top-bar">
+                            <div class="player-meta-left">
+                                <span class="tag-plan-category" id="player-quiz-type-badge">COMPLETED COURSES</span>
+                                <h3 class="player-quiz-title" id="player-quiz-title">Knowledge Assessment</h3>
+                            </div>
+                            <div class="player-meta-right">
+                                <span class="player-xp-pot" id="player-xp-pot">+75 XP Potential</span>
+                                <button class="btn-quit-quiz" onclick="App.quitQuiz()" title="Quit current quiz">✕ Exit</button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Track -->
+                        <div class="player-progress-section">
+                            <div class="player-progress-header">
+                                <span class="player-progress-text" id="player-progress-text">Question 1 of 5</span>
+                                <span class="player-progress-score" id="player-running-score">Score: 0</span>
+                            </div>
+                            <div class="player-progress-track">
+                                <div class="player-progress-fill" id="player-progress-fill" style="width: 20%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Question Box -->
+                        <div class="player-question-container">
+                            <h2 class="player-question-text" id="player-question-text">Question loading...</h2>
+                        </div>
+
+                        <!-- Options List -->
+                        <div class="player-options-grid" id="player-options-grid">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Instant Architectural Feedback Banner -->
+                        <div class="player-explanation-banner" id="player-explanation-banner" style="display: none;">
+                            <div class="explanation-icon" id="explanation-icon">💡</div>
+                            <div class="explanation-text-box">
+                                <div class="explanation-status" id="explanation-status">Correct Answer!</div>
+                                <div class="explanation-body" id="explanation-body">Here is the architectural reason...</div>
+                            </div>
+                        </div>
+
+                        <!-- Player Footer Actions -->
+                        <div class="player-footer-bar">
+                            <button class="btn-secondary" id="player-btn-prev" onclick="App.prevQuizQuestion()" disabled>← Previous</button>
+                            <button class="btn-primary" id="player-btn-next" onclick="App.nextQuizQuestion()">Next Question →</button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Results & Celebration Summary -->
+                    <div class="card quiz-results-card" id="arena-results" style="display: none;">
+                        <div class="results-celebration-head">
+                            <div class="results-badge-emoji" id="results-badge-emoji">🎉</div>
+                            <span class="results-kicker" id="results-kicker">QUIZ COMPLETE</span>
+                            <h2 class="results-title" id="results-title">Great Work! You Passed!</h2>
+                            <p class="results-desc" id="results-desc">Your results and rewards have been recorded to your career profile.</p>
+                        </div>
+
+                        <!-- Results Key Metrics -->
+                        <div class="results-stats-row">
+                            <div class="result-stat-box">
+                                <span class="result-stat-label">SCORE</span>
+                                <strong class="result-stat-val text-brand" id="results-score-pct">100%</strong>
+                                <span class="result-stat-sub" id="results-score-ratio">5 / 5 Correct</span>
+                            </div>
+                            <div class="result-stat-box">
+                                <span class="result-stat-label">XP EARNED</span>
+                                <strong class="result-stat-val text-brand" id="results-xp-earned">+75 XP</strong>
+                                <span class="result-stat-sub">Added to profile</span>
+                            </div>
+                            <div class="result-stat-box">
+                                <span class="result-stat-label">ACTIVE STREAK</span>
+                                <strong class="result-stat-val text-warning" id="results-streak-val">🔥 13 Days</strong>
+                                <span class="result-stat-sub" id="results-streak-status">Extended today!</span>
+                            </div>
+                            <div class="result-stat-box">
+                                <span class="result-stat-label">STATUS</span>
+                                <strong class="result-stat-val text-success" id="results-pass-status">PASSED ✓</strong>
+                                <span class="result-stat-sub">Passing threshold: 70%</span>
+                            </div>
+                        </div>
+
+                        <!-- Unlocked Badges Notice Banner -->
+                        <div class="results-badge-banner" id="results-badge-banner" style="display: none;">
+                            <span class="badge-alert-emoji">🏆</span>
+                            <div class="badge-alert-info">
+                                <strong>New Milestone Badge Unlocked!</strong>
+                                <span id="results-unlocked-badges-text">Quiz Ace</span>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Question Review Accordion / List -->
+                        <div class="results-review-container">
+                            <h3 class="review-section-title">Detailed Question Review & Explanations</h3>
+                            <div class="results-review-list" id="results-review-list">
+                                <!-- Populated dynamically by app.js -->
+                            </div>
+                        </div>
+
+                        <!-- Results Action Buttons -->
+                        <div class="results-actions-row">
+                            <button class="btn-secondary" onclick="App.resetQuizArena()">Take Another Quiz</button>
+                            <button class="btn-secondary" onclick="App.navigate('leaderboard')">View Leaderboard Standings</button>
+                            <button class="btn-primary" onclick="App.navigate('dashboard')">Back to Dashboard</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================
+                     VIEW 10: COURSE DISCUSSIONS & AI MENTOR FORUM
+                     ========================================================= -->
+                <section class="view-panel" id="view-discussions">
+                    <!-- Discussions Header -->
+                    <div class="page-header">
+                        <div class="page-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <h1 class="page-title">Course Discussions</h1>
+                                <p class="page-subtitle">Ask questions, share solutions, and get instant guidance from peers and the AI Technical Mentor.</p>
+                            </div>
+                            <button class="btn-primary btn-ask-question" id="btn-open-ask-modal" onclick="App.openAskQuestionModal()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 16px; height: 16px;">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                <span>Ask Question (+15 XP)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Main Discussions View Container (List View) -->
+                    <div class="discussions-container" id="discussions-list-view">
+                        <!-- Filter & Search Controls Deck -->
+                        <div class="discussions-toolbar card">
+                            <div class="toolbar-search-row">
+                                <div class="discussion-search-box">
+                                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8" />
+                                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                    </svg>
+                                    <input type="text" id="discussion-search-input" placeholder="Search questions..." oninput="App.debounceDiscussionSearch()">
+                                    <button class="btn-clear-search" id="btn-clear-discussion-search" onclick="App.clearDiscussionSearch()" style="display: none;">✕</button>
+                                </div>
+
+                                <div class="discussion-filters-group">
+                                    <select class="form-select discussion-course-select" id="discussion-course-filter" onchange="App.handleDiscussionCourseFilter(this.value)">
+                                        <option value="">All Courses</option>
+                                        <!-- Dynamically populated with courses -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Status Filter Chips -->
+                            <div class="discussion-status-tabs">
+                                <button class="status-tab active" id="tab-status-ALL" onclick="App.handleDiscussionStatusFilter('ALL')">
+                                    All
+                                </button>
+                                <button class="status-tab" id="tab-status-UNRESOLVED" onclick="App.handleDiscussionStatusFilter('UNRESOLVED')">
+                                    Unanswered
+                                </button>
+                                <button class="status-tab" id="tab-status-RESOLVED" onclick="App.handleDiscussionStatusFilter('RESOLVED')">
+                                    ✓ Solved
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Threads List Feed -->
+                        <div class="discussions-feed" id="discussions-feed">
+                            <div class="discussions-loading" id="discussions-loading">
+                                <div class="spinner-inline"></div>
+                                <span>Loading course discussions...</span>
+                            </div>
+                            <!-- Injected dynamically by App.renderDiscussionThreads -->
+                        </div>
+                    </div>
+
+                    <!-- Thread Detail View (Hidden until thread clicked) -->
+                    <div class="thread-detail-container" id="thread-detail-view" style="display: none;">
+                        <!-- Back to List Button -->
+                        <button class="btn-back-link" onclick="App.closeThreadDetail()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                                <polyline points="15 18 9 12 15 6" />
+                            </svg>
+                            <span>Back to all questions</span>
+                        </button>
+
+                        <div id="thread-detail-content">
+                            <!-- Populated dynamically by App.renderThreadDetail -->
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         ASK QUESTION MODAL (STREAMLINED & ZERO SCROLLBAR)
+         ========================================================================= -->
+    <div class="lesson-modal-overlay" id="discussion-ask-modal" style="display: none;" onclick="if(event.target === this) App.closeAskQuestionModal()">
+        <div class="lesson-modal-card discussion-modal-card">
+            <div class="lesson-modal-header">
+                <div>
+                    <h2 class="lesson-modal-title">Ask a Question</h2>
+                    <p class="lesson-modal-sub">Earn +15 XP upon submission. Our AI Mentor and community will help you solve it.</p>
+                </div>
+                <button class="btn-modal-close" onclick="App.closeAskQuestionModal()" aria-label="Close dialog" title="Close">✕</button>
+            </div>
+
+            <form id="form-ask-discussion" onsubmit="App.handleCreateThreadSubmit(event)" class="discussion-ask-form">
+                <div class="lesson-modal-body">
+                    <div class="form-row-compact">
+                        <div class="form-group flex-grow">
+                            <label class="form-label" for="ask-course-select">Course <span class="required-asterisk">*</span></label>
+                            <select id="ask-course-select" class="form-select" required>
+                                <option value="" disabled selected>Select course</option>
+                                <!-- Dynamically populated -->
+                            </select>
+                        </div>
+                        <div class="form-group-ai-toggle">
+                            <label class="ai-toggle-compact" for="ask-request-ai" title="Receive an architectural answer from AI Technical Mentor">
+                                <input type="checkbox" id="ask-request-ai" checked>
+                                <span class="ai-toggle-text">⚡ Instant AI Answer</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ask-title-input">Your Question <span class="required-asterisk">*</span></label>
+                        <input type="text" id="ask-title-input" class="form-input" placeholder="e.g. How does Kafka prevent data loss during broker failover?" required maxlength="200">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ask-content-textarea">Details or Code Snippet <span class="optional-badge">(Optional)</span></label>
+                        <textarea id="ask-content-textarea" class="form-textarea" rows="3" placeholder="Add any extra context, error logs, or code if helpful..."></textarea>
+                    </div>
+                </div>
+
+                <div class="lesson-modal-footer">
+                    <button type="button" class="btn-secondary" onclick="App.closeAskQuestionModal()">Cancel</button>
+                    <button type="submit" class="btn-primary btn-submit-thread" id="btn-submit-new-thread">
+                        <span>Post Question (+15 XP)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         INTERACTIVE LESSON PLAYER & READER MODAL
+         ========================================================================= -->
+    <div class="lesson-modal-overlay" id="lesson-player-modal" style="display: none;">
+        <div class="lesson-modal-card">
+            <div class="lesson-modal-header">
+                <div>
+                    <span class="type-pill" id="modal-lesson-type">VIDEO</span>
+                    <h2 class="lesson-modal-title" id="modal-lesson-title">Lesson Title</h2>
+                    <p class="lesson-modal-sub" id="modal-lesson-sub">Module 1 · 18 min</p>
+                </div>
+                <button class="btn-modal-close" onclick="App.closeLessonModal()">✕</button>
+            </div>
+
+            <div class="lesson-modal-body">
+                <!-- Video Container -->
+                <div class="video-container" id="modal-video-container" style="display: none;">
+                    <iframe id="modal-video-iframe" src=""
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                </div>
+
+                <!-- Markdown Content Container -->
+                <div class="reading-content-container" id="modal-reading-content">
+                    <!-- Formatted text injected here -->
+                </div>
+            </div>
+
+            <div class="lesson-modal-footer">
+                <button class="btn-secondary" onclick="App.closeLessonModal()">Close</button>
+                <button class="btn-primary" id="btn-modal-complete" onclick="App.toggleActiveModalLesson()">
+                    Mark Lesson Complete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         COURSE COMPLETION CELEBRATION MODAL WITH CONFETTI
+         ========================================================================= -->
+    <div class="completion-modal-overlay" id="course-completion-modal" style="display: none;">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="completion-modal-card">
+            <div class="celebration-badge-glow">
+                <span class="celebration-emoji">🏆</span>
+            </div>
+            <span class="celebration-subhead">COURSE COMPLETED!</span>
+            <h2 class="celebration-title" id="completion-modal-course-title">Applied Data Engineering</h2>
+            <p class="celebration-desc" id="completion-modal-desc">
+                Congratulations, <strong id="completion-modal-learner-name">Learner</strong>! You've successfully finished 100% of the lessons in this curriculum and earned your milestone certification.
+            </p>
+
+            <div class="completion-stats-box">
+                <div class="completion-stat-item">
+                    <span class="c-stat-label">STATUS</span>
+                    <strong class="c-stat-val text-success">✓ 100% DONE</strong>
+                </div>
+                <div class="completion-stat-item">
+                    <span class="c-stat-label">COMPLETED ON</span>
+                    <strong class="c-stat-val" id="completion-modal-time">Sep 6, 2026, 7:15 PM</strong>
+                </div>
+                <div class="completion-stat-item">
+                    <span class="c-stat-label">XP REWARD</span>
+                    <strong class="c-stat-val text-brand" id="completion-modal-xp">+650 XP</strong>
+                </div>
+                <div class="completion-stat-item">
+                    <span class="c-stat-label">TOTAL LESSONS</span>
+                    <strong class="c-stat-val" id="completion-modal-lessons">13 / 13</strong>
+                </div>
+            </div>
+
+            <div class="completion-modal-actions">
+                <button class="btn-secondary" onclick="App.closeCompletionModal()">Stay on Plan</button>
+                <button class="btn-primary btn-completion-glow" onclick="App.goToMyLearningFromCompletion()">
+                    View in My Learning →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         EXPANDED LEARNER PASSPORT, PROFILE & GAMIFICATION HUB
+         ========================================================================= -->
+    <div class="level-modal-overlay" id="level-xp-modal" style="display: none;" onclick="App.handleLevelModalOverlayClick(event)">
+        <div class="level-modal-card passport-modal-card">
+            <!-- Halftone pattern mesh background -->
+            <div class="level-modal-halftone"></div>
+
+            <!-- Modal Header Bar -->
+            <div class="passport-header-bar">
+                <div class="passport-header-title">
+                    <span class="passport-badge-icon">🎖️</span>
+                    <div>
+                        <h2 class="passport-main-heading">Learner Passport & Advancement Hub</h2>
+                        <span class="passport-sub-heading">Personal Career Competencies, Honors & Mastery Roadmap</span>
+                    </div>
+                </div>
+                <button class="level-modal-close-btn" onclick="App.closeLevelModal()" aria-label="Close details">&times;</button>
+            </div>
+
+            <!-- Scrollable Content Body -->
+            <div class="passport-modal-scrollable">
+
+                <!-- =============================================================
+                     SECTION 1: USER IDENTITY & SKILLS (TOP SECTION)
+                     ============================================================= -->
+                <div class="passport-section passport-profile-section">
+                    <div class="passport-user-identity">
+                        <div class="passport-avatar-wrapper">
+                            <img id="passport-user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Learner" alt="Profile Avatar" class="passport-avatar-img">
+                            <button class="passport-avatar-edit-btn" onclick="App.promptChangeAvatar()" title="Change Profile Picture">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <circle cx="12" cy="13" r="4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="passport-user-meta">
+                            <div class="passport-user-name-row">
+                                <h3 class="passport-user-name" id="passport-user-name">Shivam Gupta</h3>
+                                <span class="passport-user-tag" id="passport-user-id">USER_1</span>
+                            </div>
+                            <p class="passport-user-role" id="passport-user-role">Junior Data Engineer</p>
+                            <p class="passport-user-email" id="passport-user-email">shivam.gupta@enterprise.io</p>
+                        </div>
+                    </div>
+
+                    <!-- Skills Management -->
+                    <div class="passport-skills-container">
+                        <div class="passport-skills-header">
+                            <div class="skills-title-group">
+                                <span class="skills-section-label">Verified Skill Competencies</span>
+                                <span class="skills-count-pill" id="passport-skills-count">4 Skills</span>
+                            </div>
+                            <button class="btn-add-skill-trigger" onclick="App.toggleAddSkillForm()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span>Add Skill</span>
+                            </button>
+                        </div>
+
+                        <!-- Add Skill Inline Form -->
+                        <div class="passport-add-skill-form" id="passport-add-skill-form" style="display: none;">
+                            <div class="add-skill-inputs-row">
+                                <input type="text" id="input-new-skill-name" placeholder="Skill name (e.g. Python, Docker, React, AWS)" class="skill-input-field" />
+                                <select id="select-new-skill-level" class="skill-select-field">
+                                    <option value="BEGINNER">Beginner</option>
+                                    <option value="INTERMEDIATE" selected>Intermediate</option>
+                                    <option value="ADVANCED">Advanced</option>
+                                    <option value="EXPERT">Expert</option>
+                                </select>
+                                <button class="btn-confirm-add-skill" onclick="App.saveNewSkill()">Save</button>
+                                <button class="btn-cancel-add-skill" onclick="App.toggleAddSkillForm(false)">Cancel</button>
+                            </div>
+                        </div>
+
+                        <!-- Skills Badges Cloud -->
+                        <div class="passport-skills-cloud" id="passport-skills-cloud">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =============================================================
+                     SECTION 2: MILESTONE BADGES (MIDDLE SECTION)
+                     ============================================================= -->
+                <div class="passport-section passport-badges-section">
+                    <div class="passport-section-title-row">
+                        <div class="section-title-left">
+                            <span class="section-icon-emoji">🏆</span>
+                            <h4 class="passport-section-heading">Milestone Badges & Honors</h4>
+                        </div>
+                        <span class="badges-ratio-badge" id="passport-badges-ratio">2 / 6 Unlocked</span>
+                    </div>
+
+                    <div class="passport-badges-grid" id="passport-badges-grid">
+                        <!-- Populated dynamically via JS with unlocked & locked badges -->
+                    </div>
+                </div>
+
+                <!-- =============================================================
+                     SECTION 3: FULL LEVEL 1 TO 5 PROGRESSION LINE & XP (LOWER)
+                     ============================================================= -->
+                <div class="passport-section passport-level-section">
+                    <!-- Top Hero Row of Level Section -->
+                    <div class="level-section-top-bar">
+                        <div class="level-hero-xp-group">
+                            <div class="level-xp-value-wrapper">
+                                <span class="level-xp-huge-number" id="modal-total-xp">1,780</span>
+                                <span class="level-xp-plus-badge">+XP</span>
+                            </div>
+                            <span class="level-xp-caption">Lifetime Experience Points</span>
+                        </div>
+
+                        <div class="level-current-status-group">
+                            <div class="level-rank-pill">
+                                <span class="rank-pill-label">CURRENT RANK</span>
+                                <span class="rank-pill-val" id="modal-level-title-badge">Skill Specialist</span>
+                            </div>
+                            <div class="level-streak-pill">
+                                <span class="streak-pill-fire">🔥</span>
+                                <span class="streak-pill-text"><strong id="modal-streak-days">12</strong> Days Streak</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remaining XP Subtitle -->
+                    <div class="level-remaining-subtitle" id="modal-remaining-xp-text">1,220 XP to Level 4 (Lead Architect)</div>
+
+                    <!-- FULL LEVEL 1 TO 5 PROGRESSION ROADMAP TRACK -->
+                    <div class="roadmap-full-container">
+                        <!-- Connecting Continuous Track Bar -->
+                        <div class="roadmap-track-bar">
+                            <div class="roadmap-track-fill" id="modal-roadmap-fill" style="width: 35.6%;">
+                                <div class="roadmap-glow-orb"></div>
+                            </div>
+                        </div>
+
+                        <!-- 5 Level Milestone Nodes Row -->
+                        <div class="roadmap-milestones-row">
+                            <!-- Node 1: Level 1 -->
+                            <div class="roadmap-node" id="roadmap-node-1" data-level="1">
+                                <div class="node-icon-circle">
+                                    <span class="node-status-icon">✓</span>
+                                </div>
+                                <div class="node-meta">
+                                    <span class="node-level-title">LEVEL 1</span>
+                                    <span class="node-rank-tag">Novice Explorer</span>
+                                    <span class="node-xp-req">0 XP</span>
+                                </div>
+                            </div>
+
+                            <!-- Node 2: Level 2 -->
+                            <div class="roadmap-node" id="roadmap-node-2" data-level="2">
+                                <div class="node-icon-circle">
+                                    <span class="node-status-icon">✓</span>
+                                </div>
+                                <div class="node-meta">
+                                    <span class="node-level-title">LEVEL 2</span>
+                                    <span class="node-rank-tag">Code Apprentice</span>
+                                    <span class="node-xp-req">500 XP</span>
+                                </div>
+                            </div>
+
+                            <!-- Node 3: Level 3 -->
+                            <div class="roadmap-node" id="roadmap-node-3" data-level="3">
+                                <div class="node-icon-circle">
+                                    <span class="node-status-icon">★</span>
+                                </div>
+                                <div class="node-meta">
+                                    <span class="node-level-title">LEVEL 3</span>
+                                    <span class="node-rank-tag">Skill Specialist</span>
+                                    <span class="node-xp-req">1,500 XP</span>
+                                </div>
+                            </div>
+
+                            <!-- Node 4: Level 4 -->
+                            <div class="roadmap-node" id="roadmap-node-4" data-level="4">
+                                <div class="node-icon-circle">
+                                    <span class="node-status-icon">🔒</span>
+                                </div>
+                                <div class="node-meta">
+                                    <span class="node-level-title">LEVEL 4</span>
+                                    <span class="node-rank-tag">Lead Architect</span>
+                                    <span class="node-xp-req">3,000 XP</span>
+                                </div>
+                            </div>
+
+                            <!-- Node 5: Level 5 -->
+                            <div class="roadmap-node" id="roadmap-node-5" data-level="5">
+                                <div class="node-icon-circle">
+                                    <span class="node-status-icon">🔒</span>
+                                </div>
+                                <div class="node-meta">
+                                    <span class="node-level-title">LEVEL 5</span>
+                                    <span class="node-rank-tag">Grandmaster</span>
+                                    <span class="node-xp-req">5,000 XP</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Celebratory Confetti Canvas -->
+    <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
+
+    <!-- Client Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
