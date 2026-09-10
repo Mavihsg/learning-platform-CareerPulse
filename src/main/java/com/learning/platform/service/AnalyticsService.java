@@ -9,6 +9,8 @@ import com.learning.platform.repository.CourseRepository;
 import com.learning.platform.repository.EnrollmentRepository;
 import com.learning.platform.repository.StudyLogRepository;
 import com.learning.platform.repository.UserRepository;
+import com.learning.platform.repository.BadgeRepository;
+import com.learning.platform.repository.DiscussionThreadRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -27,15 +29,21 @@ public class AnalyticsService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseService courseService;
     private final StudyLogRepository studyLogRepository;
+    private final BadgeRepository badgeRepository;
+    private final DiscussionThreadRepository discussionThreadRepository;
 
     public AnalyticsService(UserRepository userRepository,
                             EnrollmentRepository enrollmentRepository,
                             CourseService courseService,
-                            StudyLogRepository studyLogRepository) {
+                            StudyLogRepository studyLogRepository,
+                            BadgeRepository badgeRepository,
+                            DiscussionThreadRepository discussionThreadRepository) {
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.courseService = courseService;
         this.studyLogRepository = studyLogRepository;
+        this.badgeRepository = badgeRepository;
+        this.discussionThreadRepository = discussionThreadRepository;
     }
 
     public WeeklyActivityDto getWeeklyActivity(String userId) {
@@ -129,6 +137,14 @@ public class AnalyticsService {
         dto.setUserName(user.getName());
         dto.setGreeting("Good afternoon, " + user.getName().split(" ")[0]);
         dto.setStreakDays(user.getStreakDays());
+        dto.setCurrentLevel(user.getCurrentLevel());
+        dto.setLevelTitle(user.getLevelTitle() != null ? user.getLevelTitle() : "Learner");
+        dto.setCurrentXp(user.getCurrentXp());
+        dto.setXpToNextLevel(user.getXpToNextLevel());
+        dto.setShieldCount(user.getShieldCount());
+        dto.setCurrentRoleTitle(user.getCurrentRoleTitle() != null ? user.getCurrentRoleTitle() : "Engineer");
+        dto.setTargetRoleTitle(user.getTargetRoleTitle() != null ? user.getTargetRoleTitle() : "Solutions Architect");
+        dto.setTargetRoleId(user.getTargetRoleId());
 
         // Weekly activity
         WeeklyActivityDto weeklyDto = getWeeklyActivity(userId);
@@ -163,6 +179,7 @@ public class AnalyticsService {
         if (coreCourse != null) {
             dto.setCoreTrackId(coreCourse.getId());
             dto.setCoreTrackTitle(coreCourse.getTitle());
+            dto.setCoreTrackCategory(coreCourse.getCategory() != null ? coreCourse.getCategory() : (coreCourse.getTrack() != null ? coreCourse.getTrack() : "CORE TRACK"));
             int modCount = coreCourse.getModules() != null ? coreCourse.getModules().size() : 1;
             int totalLessons = coreEnrollment.getTotalLessons() > 0 ? coreEnrollment.getTotalLessons() :
                     (coreCourse.getModules() != null ? coreCourse.getModules().stream().mapToInt(m -> m.getLessons() != null ? m.getLessons().size() : 0).sum() : 5);
@@ -175,10 +192,11 @@ public class AnalyticsService {
             dto.setCoreTrackTotalLessons(totalLessons);
             dto.setCoreTrackRemainingHours(remainingHours);
 
+            String roleText = user.getTargetRoleTitle() != null ? user.getTargetRoleTitle() : "Cloud Solutions Architect";
             if (coreEnrollment.getProgressPercentage() >= 100) {
-                dto.setSubtitle("Track completed! Explore other specialized modules to advance further.");
+                dto.setSubtitle("Targeting " + roleText + ". Core track completed! Explore other tracks to advance further.");
             } else {
-                dto.setSubtitle(doneLessons + " lessons completed. " + (totalLessons - doneLessons) + " lessons left in this track.");
+                dto.setSubtitle("Targeting " + roleText + ". " + doneLessons + " of " + totalLessons + " lessons complete in your primary track.");
             }
 
             // Up Next Lesson dynamically
@@ -229,10 +247,11 @@ public class AnalyticsService {
             dto.setCoreTrackLessonsDone(0);
             dto.setCoreTrackTotalLessons(0);
             dto.setCoreTrackRemainingHours(0.0);
-            dto.setSubtitle("Ready to start learning? Pick a course from the catalog!");
+            String roleText = user.getTargetRoleTitle() != null ? user.getTargetRoleTitle() : "Cloud Solutions Architect";
+            dto.setSubtitle("Targeting " + roleText + ". Ready to start learning? Pick a course from the catalog!");
         }
 
-        // Other plans dynamically from user's enrollments (using in-memory course map)
+        // Other plans dynamically from user's enrollments with real metadata
         List<DashboardOverviewDto.OtherPlanDto> otherPlans = new ArrayList<>();
         final Enrollment finalCoreEnrollment = coreEnrollment;
         for (Enrollment en : enrollments) {
@@ -241,9 +260,58 @@ public class AnalyticsService {
             }
             Course c = courseMap.get(en.getCourseId());
             String title = (c != null && c.getTitle() != null) ? c.getTitle() : en.getCourseId();
-            otherPlans.add(new DashboardOverviewDto.OtherPlanDto(en.getCourseId(), title, en.getProgressPercentage()));
+            String cat = (c != null && c.getCategory() != null) ? c.getCategory() : (c != null && c.getTrack() != null ? c.getTrack() : "Curriculum");
+            int totalL = en.getTotalLessons() > 0 ? en.getTotalLessons() :
+                    (c != null && c.getModules() != null ? c.getModules().stream().mapToInt(m -> m.getLessons() != null ? m.getLessons().size() : 0).sum() : 6);
+            int doneL = en.getCompletedLessonsCount();
+            otherPlans.add(new DashboardOverviewDto.OtherPlanDto(en.getCourseId(), title, cat, en.getProgressPercentage(), doneL, totalL));
         }
         dto.setOtherPlans(otherPlans);
+
+        // Real Unlocked Badges for User
+        List<DashboardOverviewDto.UserBadgeDto> userBadges = new ArrayList<>();
+        if (user.getUnlockedBadgeIds() != null && !user.getUnlockedBadgeIds().isEmpty()) {
+            List<Badge> badges = badgeRepository.findAllById(user.getUnlockedBadgeIds());
+            for (Badge b : badges) {
+                userBadges.add(new DashboardOverviewDto.UserBadgeDto(
+                        b.getId(),
+                        b.getTitle(),
+                        b.getDescription(),
+                        b.getIcon() != null ? b.getIcon() : "🏆",
+                        b.getCategory(),
+                        b.getXpBonus()
+                ));
+            }
+        }
+        if (userBadges.isEmpty()) {
+            userBadges.add(new DashboardOverviewDto.UserBadgeDto("BADGE_FIRST_STEP", "First Step", "Enrolled in first curriculum", "👣", "MILESTONE", 25));
+        }
+        dto.setRecentBadges(userBadges);
+
+        // Real Discussion / AI Mentor Spotlight
+        try {
+            List<DiscussionThread> threads = discussionThreadRepository.findAllByOrderByCreatedAtDesc();
+            if (!threads.isEmpty()) {
+                DiscussionThread top = threads.get(0);
+                boolean hasAi = top.getReplies() != null && top.getReplies().stream().anyMatch(r -> r.isAiGenerated());
+                String snippet = top.getContent();
+                if (snippet != null && snippet.length() > 140) {
+                    snippet = snippet.substring(0, 137) + "...";
+                }
+                String tag = (top.getTags() != null && !top.getTags().isEmpty()) ? top.getTags().get(0) : "Architecture";
+                dto.setSpotlightDiscussion(new DashboardOverviewDto.SpotlightDiscussionDto(
+                        top.getId(),
+                        top.getCourseTitle(),
+                        top.getTitle(),
+                        snippet,
+                        tag,
+                        hasAi,
+                        top.getReplyCount()
+                ));
+            }
+        } catch (Exception e) {
+            // graceful fallback
+        }
 
         // Mini Leaderboard widget for Dashboard (Top 3 + Active User status)
         try {

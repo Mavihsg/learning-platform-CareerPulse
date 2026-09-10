@@ -455,15 +455,33 @@ const App = {
 
         if (el('hud-streak-val')) el('hud-streak-val').textContent = `${d.streakDays !== undefined ? d.streakDays : 0}`;
 
-        const streakDays = d.streakDays !== undefined ? d.streakDays : 12;
-        const totalXp = d.totalXp !== undefined ? d.totalXp : (d.xp !== undefined ? d.xp : 480);
-        const shieldCount = d.shieldCount !== undefined ? d.shieldCount : 1;
-        const levelVal = d.currentLevel !== undefined ? d.currentLevel : 2;
+        const userLevel = d.currentLevel !== undefined ? d.currentLevel : (this.currentUser ? this.currentUser.currentLevel : 1);
+        const userLevelTitle = d.levelTitle || (this.currentUser ? this.currentUser.levelTitle : 'Novice Explorer');
+        const userXp = d.currentXp !== undefined ? d.currentXp : (this.currentUser ? (this.currentUser.currentXp || 0) : 0);
+        const userStreak = d.streakDays !== undefined ? d.streakDays : (this.currentUser ? (this.currentUser.streakDays || 0) : 0);
+        const userShields = d.shieldCount !== undefined ? d.shieldCount : (this.currentUser ? (this.currentUser.shieldCount || 0) : 0);
 
-        if (el('dash-hero-streak')) el('dash-hero-streak').textContent = `${streakDays} Days`;
-        if (el('dash-hero-xp')) el('dash-hero-xp').textContent = `${totalXp} XP`;
-        if (el('dash-hero-shield')) el('dash-hero-shield').textContent = `${shieldCount} Shield`;
-        if (el('dash-hero-level')) el('dash-hero-level').textContent = `Level ${levelVal}`;
+        if (el('dash-hero-streak')) el('dash-hero-streak').textContent = `${userStreak} Days`;
+        if (el('dash-hero-xp')) el('dash-hero-xp').textContent = `${userXp.toLocaleString()} XP`;
+        if (el('dash-hero-shield')) el('dash-hero-shield').textContent = `${userShields} Shield${userShields !== 1 ? 's' : ''}`;
+        if (el('dash-hero-level')) el('dash-hero-level').textContent = `Level ${userLevel}`;
+        if (el('dash-hero-level-title')) el('dash-hero-level-title').textContent = userLevelTitle;
+
+        // Synchronize header HUD level pill
+        if (el('hud-level-val')) el('hud-level-val').textContent = `LVL ${userLevel} · ${userLevelTitle.toUpperCase()}`;
+
+        // Dynamic Daily Quiz banner streak title
+        if (el('dash-daily-quiz-title')) {
+            if (userStreak > 0) {
+                el('dash-daily-quiz-title').textContent = `Keep your ${userStreak}-day streak alive!`;
+            } else {
+                el('dash-daily-quiz-title').textContent = `Start your learning streak today!`;
+            }
+        }
+
+        if (el('dash-core-plan-tag')) {
+            el('dash-core-plan-tag').textContent = `PLAN 01 / ${(d.coreTrackCategory || 'CORE TRACK').toUpperCase()}`;
+        }
 
         if (d.upNextLesson) {
             if (el('dash-upnext-title')) el('dash-upnext-title').textContent = d.upNextLesson.lessonTitle || 'Start your first lesson';
@@ -479,6 +497,14 @@ const App = {
 
         if (d.otherPlans) {
             this.renderOtherPlans(d.otherPlans);
+        }
+
+        if (d.recentBadges) {
+            this.renderDashBadges(d.recentBadges);
+        }
+
+        if (d.spotlightDiscussion) {
+            this.renderDashSpotlight(d.spotlightDiscussion);
         }
 
         if (d.miniLeaderboard) {
@@ -537,6 +563,8 @@ const App = {
             const pct = p.progressPercentage !== undefined ? p.progressPercentage : 0;
             const item = document.createElement('div');
             item.className = 'dash-plan-card';
+            const lessonsDone = p.completedLessons !== undefined ? p.completedLessons : Math.round((pct / 100) * 8);
+            const totalLessons = p.totalLessons || 8;
             item.innerHTML = `
                 <div class="dash-plan-card-header">
                     <span class="dash-plan-card-tag">${this.escapeHtml(p.category || 'Curriculum')}</span>
@@ -547,12 +575,58 @@ const App = {
                     <div class="dash-plan-card-fill" style="width: ${pct}%;"></div>
                 </div>
                 <div class="dash-plan-card-footer">
-                    <span class="dash-plan-card-lessons">${p.completedLessons !== undefined ? p.completedLessons : Math.round((pct / 100) * 8)} / ${p.totalLessons || 8} lessons</span>
+                    <span class="dash-plan-card-lessons">${lessonsDone} / ${totalLessons} lessons</span>
                     <button type="button" class="dash-plan-card-action" onclick="App.navigate('plan')">Continue →</button>
                 </div>
             `;
             list.appendChild(item);
         });
+    },
+
+    renderDashBadges(badges) {
+        const grid = document.getElementById('dash-badges-grid');
+        if (!grid) return;
+
+        if (!badges || badges.length === 0) {
+            grid.innerHTML = `
+                <div class="dash-empty-plans" style="grid-column: 1 / -1;">
+                    <p>Complete lessons and daily quizzes to unlock achievement badges.</p>
+                </div>
+            `;
+            return;
+        }
+
+        grid.innerHTML = '';
+        badges.slice(0, 3).forEach(b => {
+            const chip = document.createElement('div');
+            chip.className = 'dash-badge-chip';
+            chip.innerHTML = `
+                <span class="dash-badge-icon">${b.icon || '🏆'}</span>
+                <div class="dash-badge-info">
+                    <div class="dash-badge-name">${this.escapeHtml(b.title)}</div>
+                    <div class="dash-badge-desc">${this.escapeHtml(b.description || 'Achievement milestone unlocked')}</div>
+                </div>
+            `;
+            grid.appendChild(chip);
+        });
+    },
+
+    renderDashSpotlight(sp) {
+        if (!sp) return;
+        const badgeEl = document.getElementById('dash-spotlight-badge');
+        const titleEl = document.getElementById('dash-spotlight-title');
+        const descEl = document.getElementById('dash-spotlight-desc');
+
+        if (badgeEl) {
+            const aiPill = sp.hasAiAnswer ? '<span class="badge-ai-pill">⚡ AI Answered</span> ' : '';
+            badgeEl.innerHTML = `${aiPill}${this.escapeHtml(sp.category || 'Architecture')}`;
+        }
+        if (titleEl) {
+            titleEl.textContent = sp.title || 'Course Discussions';
+        }
+        if (descEl) {
+            descEl.textContent = sp.snippet || 'Join the discussion with peers and technical mentors.';
+        }
     },
 
     renderMiniLeaderboard(mini) {
