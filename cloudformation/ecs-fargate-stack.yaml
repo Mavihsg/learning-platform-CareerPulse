@@ -1,0 +1,331 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation Template for CareerPulse Learning Platform.
+  Provisions an Amazon ECS Fargate Cluster, Application Load Balancer (ALB),
+  VPC networking, and ECS Service running containerized Spring Boot with Neon PostgreSQL.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Application Configuration"
+        Parameters:
+          - AppName
+          - EnvironmentName
+          - ContainerPort
+          - DesiredCount
+          - FargateCpu
+          - FargateMemory
+      - Label:
+          default: "Database (Neon PostgreSQL)"
+        Parameters:
+          - NeonDatabaseUrl
+          - NeonDatabaseUsername
+          - NeonDatabasePassword
+      - Label:
+          default: "AI Service Configuration"
+        Parameters:
+          - GeminiApiKey
+
+Parameters:
+  AppName:
+    Type: String
+    Default: careerpulse-lms
+    Description: Application name used for naming resources.
+
+  EnvironmentName:
+    Type: String
+    Default: prod
+    Description: Environment name (prod, staging, dev).
+
+  ContainerPort:
+    Type: Number
+    Default: 8080
+    Description: Port where the Spring Boot application is exposed.
+
+  DesiredCount:
+    Type: Number
+    Default: 1
+    Description: Number of ECS task instances to run.
+
+  FargateCpu:
+    Type: String
+    Default: '512'
+    AllowedValues: ['256', '512', '1024', '2048']
+    Description: 256 (.25 vCPU), 512 (.5 vCPU), 1024 (1 vCPU), 2048 (2 vCPU).
+
+  FargateMemory:
+    Type: String
+    Default: '1024'
+    AllowedValues: ['512', '1024', '2048', '4096']
+    Description: Memory in MB (e.g. 1024 = 1GB, 2048 = 2GB).
+
+  NeonDatabaseUrl:
+    Type: String
+    Description: Neon PostgreSQL JDBC Connection String with sslmode=require and pooler endpoint.
+
+  NeonDatabaseUsername:
+    Type: String
+    Default: neondb_owner
+    Description: Neon PostgreSQL Username.
+
+  NeonDatabasePassword:
+    Type: String
+    NoEcho: true
+    Description: Neon PostgreSQL Password.
+
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Description: Google Gemini API Key.
+
+Resources:
+  # =========================================================================
+  # 1. VPC Networking (2 Availability Zones for ALB compliance)
+  # =========================================================================
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AppName}-${EnvironmentName}-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${AppName}-${EnvironmentName}-igw'
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AppName}-public-subnet-1'
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${AppName}-public-subnet-2'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${AppName}-public-rt'
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # =========================================================================
+  # 2. Security Groups
+  # =========================================================================
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound HTTP to Application Load Balancer
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  EcsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow traffic from ALB to ECS Fargate container only
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref ContainerPort
+          ToPort: !Ref ContainerPort
+          SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+
+  # =========================================================================
+  # 3. Application Load Balancer & Target Group
+  # =========================================================================
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub '${AppName}-alb'
+      Scheme: internet-facing
+      Type: application
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+
+  AlbTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub '${AppName}-tg'
+      Port: !Ref ContainerPort
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VPC
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+
+  AlbListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref AlbTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  # =========================================================================
+  # 4. Amazon ECR & CloudWatch Logs
+  # =========================================================================
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${AppName}-ecr'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${AppName}'
+      RetentionInDays: 7
+
+  # =========================================================================
+  # 5. IAM Roles for ECS Execution and Tasks
+  # =========================================================================
+  EcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  # =========================================================================
+  # 6. ECS Cluster, Task Definition & Service
+  # =========================================================================
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${AppName}-cluster'
+
+  EcsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${AppName}-task'
+      Cpu: !Ref FargateCpu
+      Memory: !Ref FargateMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt EcsTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: !Ref AppName
+          Image: !Sub '${EcrRepository.RepositoryUri}:latest'
+          PortMappings:
+            - ContainerPort: !Ref ContainerPort
+          Environment:
+            - Name: SPRING_PROFILES_ACTIVE
+              Value: prod
+            - Name: PORT
+              Value: !Sub '${ContainerPort}'
+            - Name: SPRING_DATASOURCE_URL
+              Value: !Ref NeonDatabaseUrl
+            - Name: SPRING_DATASOURCE_USERNAME
+              Value: !Ref NeonDatabaseUsername
+            - Name: SPRING_DATASOURCE_PASSWORD
+              Value: !Ref NeonDatabasePassword
+            - Name: GEMINI_API_KEY
+              Value: !Ref GeminiApiKey
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  EcsService:
+    Type: AWS::ECS::Service
+    DependsOn: AlbListener
+    Properties:
+      ServiceName: !Sub '${AppName}-service'
+      Cluster: !Ref EcsCluster
+      TaskDefinition: !Ref EcsTaskDefinition
+      LaunchType: FARGATE
+      DesiredCount: !Ref DesiredCount
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          Subnets:
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups:
+            - !Ref EcsSecurityGroup
+      LoadBalancers:
+        - ContainerName: !Ref AppName
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref AlbTargetGroup
+
+Outputs:
+  LoadBalancerDNS:
+    Description: Public URL of the Application Load Balancer
+    Value: !Sub 'http://${ApplicationLoadBalancer.DNSName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-AlbDNS'
+
+  EcrRepositoryUri:
+    Description: URI for Docker ECR Image Repository
+    Value: !GetAtt EcrRepository.RepositoryUri
+    Export:
+      Name: !Sub '${AWS::StackName}-EcrUri'

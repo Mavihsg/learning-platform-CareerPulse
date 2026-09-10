@@ -1,0 +1,206 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation Template for CareerPulse Gamified Learning Platform.
+  Provisions an AWS ECR Repository and an AWS App Runner Service running
+  the containerized Spring Boot 3 Java 21 web application connected to Neon PostgreSQL.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Application & Service Configuration"
+        Parameters:
+          - ServiceName
+          - ContainerPort
+          - Cpu
+          - Memory
+      - Label:
+          default: "Neon PostgreSQL Database Configuration"
+        Parameters:
+          - NeonDatabaseUrl
+          - NeonDatabaseUsername
+          - NeonDatabasePassword
+      - Label:
+          default: "AI Service Configuration"
+        Parameters:
+          - GeminiApiKey
+
+Parameters:
+  ServiceName:
+    Type: String
+    Default: careerpulse-lms
+    Description: Name of the App Runner service and prefix for created resources.
+    AllowedPattern: '^[a-zA-Z0-9-]+$'
+    ConstraintDescription: Must contain only alphanumeric characters and hyphens.
+
+  ContainerPort:
+    Type: String
+    Default: '8080'
+    Description: Internal TCP port where the Spring Boot application listens.
+
+  Cpu:
+    Type: String
+    Default: '1 vCPU'
+    AllowedValues:
+      - '0.25 vCPU'
+      - '0.5 vCPU'
+      - '1 vCPU'
+      - '2 vCPU'
+      - '4 vCPU'
+    Description: CPU allocation for the App Runner container instance.
+
+  Memory:
+    Type: String
+    Default: '2 GB'
+    AllowedValues:
+      - '0.5 GB'
+      - '1 GB'
+      - '2 GB'
+      - '3 GB'
+      - '4 GB'
+    Description: Memory allocation for the App Runner container instance.
+
+  NeonDatabaseUrl:
+    Type: String
+    Description: >
+      JDBC connection URL for Neon PostgreSQL.
+      Recommended: Use the PgBouncer pooler endpoint with sslmode=require.
+      Example: jdbc:postgresql://ep-mute-dream-aee1esdv-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&reWriteBatchedInserts=true
+
+  NeonDatabaseUsername:
+    Type: String
+    Default: neondb_owner
+    Description: Username for the Neon PostgreSQL database.
+
+  NeonDatabasePassword:
+    Type: String
+    NoEcho: true
+    Description: Secure password for the Neon PostgreSQL database (hidden from console output).
+
+  GeminiApiKey:
+    Type: String
+    NoEcho: true
+    Description: Google Gemini API Key for AI quiz generation and mentor explanations.
+
+Resources:
+  # =========================================================================
+  # 1. AWS Elastic Container Registry (ECR)
+  # =========================================================================
+  AppEcrRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub '${ServiceName}-repo'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep only the last 5 tagged container images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+
+  # =========================================================================
+  # 2. IAM Role for App Runner to Pull from ECR
+  # =========================================================================
+  AppRunnerEcrAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ServiceName}-ecr-access-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - build.apprunner.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess
+
+  # =========================================================================
+  # 3. IAM Role for Container Runtime (Instance Role)
+  # =========================================================================
+  AppRunnerInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ServiceName}-instance-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - tasks.apprunner.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
+  # =========================================================================
+  # 4. AWS App Runner Service (Fully Managed Spring Boot Container Web App)
+  # =========================================================================
+  AppRunnerService:
+    Type: AWS::AppRunner::Service
+    Properties:
+      ServiceName: !Ref ServiceName
+      SourceConfiguration:
+        AuthenticationConfiguration:
+          AccessRoleArn: !GetAtt AppRunnerEcrAccessRole.Arn
+        AutoDeploymentsEnabled: true
+        ImageRepository:
+          ImageIdentifier: !Sub '${AppEcrRepository.RepositoryUri}:latest'
+          ImageRepositoryType: ECR
+          ImageConfiguration:
+            Port: !Ref ContainerPort
+            RuntimeEnvironmentVariables:
+              - Name: SPRING_PROFILES_ACTIVE
+                Value: prod
+              - Name: PORT
+                Value: !Ref ContainerPort
+              - Name: SPRING_DATASOURCE_URL
+                Value: !Ref NeonDatabaseUrl
+              - Name: SPRING_DATASOURCE_USERNAME
+                Value: !Ref NeonDatabaseUsername
+              - Name: SPRING_DATASOURCE_PASSWORD
+                Value: !Ref NeonDatabasePassword
+              - Name: GEMINI_API_KEY
+                Value: !Ref GeminiApiKey
+      InstanceConfiguration:
+        Cpu: !Ref Cpu
+        Memory: !Ref Memory
+        InstanceRoleArn: !GetAtt AppRunnerInstanceRole.Arn
+      HealthCheckConfiguration:
+        Protocol: HTTP
+        Path: /
+        Interval: 15
+        Timeout: 5
+        HealthyThreshold: 1
+        UnhealthyThreshold: 5
+
+Outputs:
+  ServiceUrl:
+    Description: Public HTTPS URL for the CareerPulse Learning Platform
+    Value: !Sub 'https://${AppRunnerService.ServiceUrl}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ServiceUrl'
+
+  EcrRepositoryUri:
+    Description: Docker ECR Repository URI for building and pushing images
+    Value: !GetAtt AppEcrRepository.RepositoryUri
+    Export:
+      Name: !Sub '${AWS::StackName}-EcrRepoUri'
+
+  AppRunnerServiceArn:
+    Description: ARN of the deployed AWS App Runner Service
+    Value: !GetAtt AppRunnerService.ServiceArn
