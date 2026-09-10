@@ -390,13 +390,15 @@ public class AnalyticsService {
             entry.setCompletedCoursesCount((int) completedCourses);
 
             int calculatedWeeklyXp = weeklyMinutes * 2 + Math.min(250, u.getStreakDays() * 10);
-            if ("user_1".equals(u.getId())) {
-                // Synchronize real-time XP with user profile
+            if (currentUserId != null && currentUserId.equals(u.getId())) {
+                // Synchronize real-time XP with active user profile
+                calculatedWeeklyXp = u.getCurrentXp();
+            } else if ("user_1".equals(u.getId())) {
                 calculatedWeeklyXp = u.getCurrentXp();
             } else if ("user_4".equals(u.getId())) {
                 calculatedWeeklyXp = 2450;
             } else if ("user_2".equals(u.getId())) {
-                calculatedWeeklyXp = 2100;
+                calculatedWeeklyXp = u.getCurrentXp() > 0 ? u.getCurrentXp() : 2100;
             } else if ("user_5".equals(u.getId())) {
                 calculatedWeeklyXp = 1480;
             } else if ("user_3".equals(u.getId())) {

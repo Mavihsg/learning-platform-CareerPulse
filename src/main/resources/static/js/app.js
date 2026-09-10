@@ -1719,18 +1719,40 @@ const App = {
             document.getElementById('profile-detail-email').textContent = user.email || '';
             document.getElementById('profile-detail-role').textContent = user.currentRoleTitle || 'Learner';
             document.getElementById('profile-detail-target').textContent = user.targetRoleTitle || user.targetRoleId || 'Not Set';
-            document.getElementById('profile-detail-since').textContent = 'September 2026';
+            const profLevelEl = document.getElementById('profile-level');
+            if (profLevelEl) profLevelEl.textContent = `LVL ${user.currentLevel || 1}`;
+            const profLevelTitleEl = document.getElementById('profile-level-title');
+            if (profLevelTitleEl) profLevelTitleEl.textContent = user.levelTitle || 'Novice Explorer';
         }
 
-        if (d) {
-            document.getElementById('profile-xp').textContent = d.totalXP || '480';
-            document.getElementById('profile-streak').textContent = `${d.streakDays || 12}d`;
-            document.getElementById('profile-core-pct').textContent = `${d.coreTrackProgressPercentage || 38}%`;
-            document.getElementById('profile-core-title').textContent = d.coreTrackTitle || 'Applied Data Engineering';
+        const xpVal = (d && d.currentXp != null) ? d.currentXp : (user && user.currentXp != null ? user.currentXp : 0);
+        const xpEl = document.getElementById('profile-xp');
+        if (xpEl) xpEl.textContent = Number(xpVal).toLocaleString();
 
-            document.getElementById('profile-lessons-done').textContent = `${d.coreTrackLessonsDone || 5} / ${d.coreTrackTotalLessons || 13}`;
-            document.getElementById('profile-plans-enrolled').textContent = d.plansEnrolledCount || '4';
-            document.getElementById('profile-hours').textContent = `${d.timeLoggedHours || 2} h`;
+        if (d) {
+            const profLevelEl = document.getElementById('profile-level');
+            if (profLevelEl && d.currentLevel) profLevelEl.textContent = `LVL ${d.currentLevel}`;
+            const profLevelTitleEl = document.getElementById('profile-level-title');
+            if (profLevelTitleEl && d.levelTitle) profLevelTitleEl.textContent = d.levelTitle;
+
+            const streakVal = (d.streakDays != null) ? d.streakDays : (user ? user.streakDays : 0);
+            const streakEl = document.getElementById('profile-streak');
+            if (streakEl) streakEl.textContent = `${streakVal}d`;
+
+            const corePctEl = document.getElementById('profile-core-pct');
+            if (corePctEl) corePctEl.textContent = `${d.coreTrackProgressPercentage != null ? d.coreTrackProgressPercentage : 0}%`;
+
+            const coreTitleEl = document.getElementById('profile-core-title');
+            if (coreTitleEl) coreTitleEl.textContent = d.coreTrackTitle || 'Core Track';
+
+            const lessonsDoneEl = document.getElementById('profile-lessons-done');
+            if (lessonsDoneEl) lessonsDoneEl.textContent = `${d.coreTrackLessonsDone != null ? d.coreTrackLessonsDone : 0} / ${d.coreTrackTotalLessons != null ? d.coreTrackTotalLessons : 0}`;
+
+            const plansEnrolledEl = document.getElementById('profile-plans-enrolled');
+            if (plansEnrolledEl) plansEnrolledEl.textContent = d.plansEnrolledCount != null ? d.plansEnrolledCount : '0';
+
+            const hoursEl = document.getElementById('profile-hours');
+            if (hoursEl) hoursEl.textContent = `${d.timeLoggedHours != null ? d.timeLoggedHours : 0} h`;
         }
 
         // Count authored courses
