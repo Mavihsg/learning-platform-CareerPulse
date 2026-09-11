@@ -1824,6 +1824,10 @@ const App = {
 
             const hoursEl = document.getElementById('profile-hours');
             if (hoursEl) hoursEl.textContent = `${d.timeLoggedHours != null ? d.timeLoggedHours : 0} h`;
+
+            const badgesCount = (user && user.unlockedBadgeIds) ? user.unlockedBadgeIds.length : (d && d.recentBadges ? d.recentBadges.length : 0);
+            const badgesEl = document.getElementById('profile-badges');
+            if (badgesEl) badgesEl.textContent = String(badgesCount);
         }
 
         // Count authored courses
