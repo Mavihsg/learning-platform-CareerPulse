@@ -74,6 +74,14 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Microsoft Playwright for Automated End-to-End UI Testing -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.48.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
