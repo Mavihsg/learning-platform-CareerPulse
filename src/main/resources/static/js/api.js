@@ -118,6 +118,11 @@ const API = {
         }
     },
 
+    // Public Config & Feature Flags
+    async getPublicConfig() {
+        return this.get('/config');
+    },
+
     // Authentication Endpoints
     async login(email, password) {
         return this.post('/auth/login', { email, password });

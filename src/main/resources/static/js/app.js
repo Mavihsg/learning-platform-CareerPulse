@@ -66,11 +66,40 @@ const App = {
         ]
     },
 
+    // Runtime App Configuration & Feature Flags
+    appConfig: {
+        demoUsersEnabled: true,
+        environment: 'development'
+    },
+
     async init() {
         this.initNetflixIntro();
         this.initTheme();
         this.bindEvents();
+        await this.loadAppConfig();
         this.checkAuth();
+    },
+
+    async loadAppConfig() {
+        try {
+            const config = await API.getPublicConfig();
+            if (config) {
+                this.appConfig = { ...this.appConfig, ...config };
+            }
+        } catch (err) {
+            console.warn('Could not fetch /api/config, applying fallback detection:', err);
+            // If running on non-localhost without config, default to hiding demo accounts
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            this.appConfig.demoUsersEnabled = isLocal;
+        }
+        this.applyFeatureVisibility();
+    },
+
+    applyFeatureVisibility() {
+        const demoSection = document.getElementById('quick-demo-section');
+        if (demoSection) {
+            demoSection.style.display = this.appConfig.demoUsersEnabled ? 'block' : 'none';
+        }
     },
 
     initNetflixIntro() {
@@ -168,6 +197,7 @@ const App = {
     },
 
     showAuthModal() {
+        this.applyFeatureVisibility();
         const modal = document.getElementById('auth-modal');
         if (modal) modal.style.display = 'flex';
     },
@@ -238,6 +268,11 @@ const App = {
     },
 
     async quickLogin(userId) {
+        if (this.appConfig && this.appConfig.demoUsersEnabled === false) {
+            console.warn('Quick login is disabled in this environment.');
+            alert('Quick demo logins are disabled in production.');
+            return;
+        }
         try {
             try { sessionStorage.clear(); } catch (e) {}
             this.dashboardData = null;
