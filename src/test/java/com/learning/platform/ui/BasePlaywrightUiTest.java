@@ -31,18 +31,23 @@ public abstract class BasePlaywrightUiTest {
         playwright = Playwright.create(createOptions);
 
         boolean headless = Boolean.parseBoolean(System.getProperty("playwright.headless", "true"));
-        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions().setHeadless(headless);
+        double slowMo = headless ? 0 : 500;
+        BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
+                .setHeadless(headless)
+                .setSlowMo(slowMo);
 
         // Resilient browser launch strategy:
         // Use pre-installed Microsoft Edge or Google Chrome on Windows (zero network download required)
         try {
             browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                     .setHeadless(headless)
+                    .setSlowMo(slowMo)
                     .setChannel("msedge"));
         } catch (Exception e1) {
             try {
                 browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                         .setHeadless(headless)
+                        .setSlowMo(slowMo)
                         .setChannel("chrome"));
             } catch (Exception e2) {
                 browser = playwright.chromium().launch(options);
