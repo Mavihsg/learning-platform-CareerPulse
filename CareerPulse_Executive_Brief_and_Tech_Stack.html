@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Pulse - Executive Project Brief & Technical Architecture</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface-elevated: #21262d;
+            --border: #30363d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --brand-purple: #a855f7;
+            --brand-blue: #38bdf8;
+            --brand-green: #34d399;
+            --brand-amber: #fbbf24;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            line-height: 1.65;
+            padding: 3rem 1.5rem;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--brand-purple);
+            border: 1px solid rgba(168, 85, 247, 0.35);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        h1 { font-size: 2.4rem; font-weight: 800; color: #fff; margin-bottom: 0.5rem; }
+        .subtitle { font-size: 1.15rem; color: var(--text-secondary); margin-bottom: 1.25rem; }
+        .meta-bar {
+            display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); font-family: var(--font-mono);
+        }
+        .meta-bar span { display: inline-flex; align-items: center; gap: 0.4rem; }
+        h2 { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 2.5rem 0 1.25rem 0; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.15rem; font-weight: 600; color: var(--brand-blue); margin: 1.5rem 0 0.75rem 0; }
+        p { margin-bottom: 1rem; color: #c9d1d9; }
+        ul, ol { margin-left: 1.5rem; margin-bottom: 1.25rem; color: #c9d1d9; }
+        li { margin-bottom: 0.4rem; }
+        strong { color: #fff; }
+        pre, code {
+            font-family: var(--font-mono);
+            background: #090d13;
+            border-radius: 6px;
+        }
+        code { padding: 0.2rem 0.4rem; font-size: 0.875rem; color: #79c0ff; border: 1px solid rgba(255,255,255,0.06); }
+        pre {
+            padding: 1.25rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            margin: 1.25rem 0;
+            font-size: 0.85rem;
+            color: #d2a8ff;
+            line-height: 1.5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            background: var(--surface);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        th, td {
+            padding: 0.85rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--surface-elevated);
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .card-title { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.4rem; }
+        .card-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+        .status-pill {
+            display: inline-block;
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--brand-green);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+        .footer {
+            margin-top: 4rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header class="header">
+        <div class="badge">Enterprise Engineering Brief</div>
+        <h1>Career Pulse</h1>
+        <div class="subtitle">Continuous Learning &amp; Career Advancement Platform — Technical Brief &amp; Architecture</div>
+        <div class="meta-bar">
+            <span>📅 <strong>Date:</strong> September 11, 2026</span>
+            <span>📂 <strong>Repository:</strong> Mavihsg/learning-platform-CareerPulse</span>
+            <span>🌿 <strong>Branch:</strong> main</span>
+            <span><span class="status-pill">BUILD SUCCESS (33/33 TESTS)</span></span>
+        </div>
+    </header>
+
+    <section>
+        <h2>1. Executive Summary: What We Accomplished Today</h2>
+        <p>Today’s engineering efforts focused on <strong>real-data synchronization</strong>, <strong>visual UI polish</strong>, <strong>cloud deployment hardening</strong>, <strong>end-to-end browser test automation with Microsoft Playwright</strong>, and <strong>live database-to-frontend integrity verification</strong> across both local H2 and cloud <strong>Neon.tech PostgreSQL</strong>.</p>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-title">📊 Real-Data Alignment</div>
+                <div class="card-desc">Eliminated mockups across Dashboards and Profiles. Synchronized Isha Agarwal's profile state (<strong>2,100 XP</strong>, <strong>Level 3 "Skill Specialist"</strong>) across Dashboard hero, HUD, and Profile views.</div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎨 SVG Visual Badges</div>
+                <div class="card-desc">Replaced plain/broken font icon strings with high-contrast, scalable inline SVGs and themed color container cards (amber, rose, orange, etc.).</div>
+            </div>
+            <div class="card">
+                <div class="card-title">✨ Navigation AI Chips</div>
+                <div class="card-desc">Standardized navigation items with matching purple <code>AI</code> chips for both Plan Builder and Quiz Arena, removing duplicate badges from dashboard tiles.</div>
+            </div>
+            <div class="card">
+                <div class="card-title">☁️ Cloud Feature Flag</div>
+                <div class="card-desc">Introduced <code>app.features.demo-users-enabled</code> and <code>/api/config</code> to automatically hide demo profile chips in cloud/production environments.</div>
+            </div>
+            <div class="card">
+                <div class="card-title">🎭 Playwright UI Automation</div>
+                <div class="card-desc">Zero-Node native Java integration (<code>playwright:1.48.0</code>) with Edge/Chrome pre-installed channel launch, headed demo mode, and automated screenshots.</div>
+            </div>
+            <div class="card">
+                <div class="card-title">🐘 Neon PostgreSQL Verification</div>
+                <div class="card-desc">Directly bootstrapped Spring Boot against cloud Neon PostgreSQL via PgBouncer and verified that all cloud DB entities match the frontend DOM with 100% precision.</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Automated E2E Test Suites Implemented</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Suite Class</th>
+                    <th>Scope &amp; Verification Description</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>AuthAndFeatureFlagUiTest</code></td>
+                    <td>Netflix intro overlay, auth modal centering, local demo user chips, and quick sign-in.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>DashboardUiTest</code></td>
+                    <td>Real profile XP (2,100), Level 3 title, inline SVG badge containers, and AI nav chips.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>QuizArenaUiTest</code></td>
+                    <td>Quiz Arena view navigation and challenge cards layout.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>QuizArenaInteractiveUiTest</code></td>
+                    <td>Full 3-question Daily Quiz Sprint (answering, feedback reveal, submit, and score card).</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>PlanBuilderUiTest</code></td>
+                    <td>Course authoring interface, title input, and editable module creator cards.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>CloudFeatureFlagNegativeUiTest</code></td>
+                    <td>Verifies demo accounts are hidden (<code>display: none</code>) and quick login is rejected when flag is disabled.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>DatabaseToFrontendIntegrityUiTest</code></td>
+                    <td>Directly queries H2 JPA repositories (Users, Courses, Badges, Enrollments, Leaderboard) and matches DOM elements.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+                <tr>
+                    <td><code>NeonDatabaseToFrontendIntegrityUiTest</code></td>
+                    <td>Directly queries live cloud Neon.tech PostgreSQL (over PgBouncer) and asserts frontend DOM matching.</td>
+                    <td><span class="status-pill">PASSED</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Everything Used to Build This App (Tech Stack &amp; Architecture)</h2>
+        
+        <pre>
+                                  CAREER PULSE ARCHITECTURE
+                                  
+   +-----------------------------------------------------------------------------------+
+   |                                 FRONTEND CLIENT                                   |
+   |   - Semantic HTML5 & Vanilla JavaScript ES6+ (Zero-Framework, Instant Load)       |
+   |   - Vanilla CSS Design System with CSS Variables (Dark/Light Modes, Glassmorphism)|
+   |   - Netflix-Style Cinematic Intro (Canvas/SVG Animations + Laser Streaks)         |
+   |   - Canvas Confetti Particle Engine (Gamified Celebration FX)                     |
+   |   - DiceBear Bottts SVG Avatar API + Google Fonts (Inter & JetBrains Mono)        |
+   +------------------------------------------+----------------------------------------+
+                                              | REST JSON APIs (/api/*)
+                                              v
+   +-----------------------------------------------------------------------------------+
+   |                             BACKEND (SPRING BOOT 3)                               |
+   |   - Java 21 LTS + Spring Boot 3.3.3                                               |
+   |   - Spring MVC (REST Controllers: Auth, Analytics, Courses, Quizzes, Discussions)  |
+   |   - Spring Data JPA + Hibernate ORM 6.5                                           |
+   |   - Spring In-Memory Cache (@Cacheable) + CacheWarmupRunner (Sub-ms Latency)      |
+   |   - HikariCP Connection Pool (Max 10-15 connections, keepalive tuned)             |
+   |   - DatabaseIndexRunner (Automated secondary index creation & deduplication)      |
+   +--------------------+--------------------------------------+-----------------------+
+                        |                                      |
+         +--------------+--------------+        +--------------+--------------+
+         |      DATABASE LAYER         |        |    EXTERNAL INTEGRATIONS    |
+         | - Neon.tech Serverless      |        | - Google Gemini AI API       |
+         |   PostgreSQL (PgBouncer)    |        |   (Fallback Curated Engine)  |
+         | - In-Memory H2 Database     |        | - Google Identity Services   |
+         |   (Zero-config local/test)  |        | - YouTube Embed API          |
+         +-----------------------------+        +-----------------------------+
+                        |
+                        v
+   +-----------------------------------------------------------------------------------+
+   |                            TESTING & AUTOMATION                                   |
+   |   - Microsoft Playwright Java 1.48.0 (Headless / Headed Edge & Chrome Automation)  |
+   |   - JUnit 5 & Spring Boot Test (@SpringBootTest on Random Ports)                  |
+   |   - Database-to-Frontend Entity Verification & Automated Screenshot Capture       |
+   +-----------------------------------------------------------------------------------+
+   |                            DEVOPS & CLOUD DEPLOYMENT                              |
+   |   - Apache Maven (Dependency management & multi-profile build lifecycle)          |
+   |   - Docker (Multi-stage containerization)                                         |
+   |   - AWS CloudFormation (App Runner & ECS Fargate infrastructure-as-code)          |
+   |   - GitHub Actions CI/CD Pipeline + Git Version Control                           |
+   +-----------------------------------------------------------------------------------+
+        </pre>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Layer / Category</th>
+                    <th>Technology Used</th>
+                    <th>Implementation Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Backend Runtime</strong></td>
+                    <td><strong>Java 21 LTS</strong></td>
+                    <td>Modern language runtime with performance enhancements and record types.</td>
+                </tr>
+                <tr>
+                    <td><strong>Backend Framework</strong></td>
+                    <td><strong>Spring Boot 3.3.3</strong></td>
+                    <td>REST API controllers, service beans, dependency injection, and configuration.</td>
+                </tr>
+                <tr>
+                    <td><strong>ORM / Persistence</strong></td>
+                    <td><strong>Spring Data JPA &amp; Hibernate 6.5</strong></td>
+                    <td>Relational persistence for Users, Courses, Lessons, Enrollments, Badges, and Quizzes.</td>
+                </tr>
+                <tr>
+                    <td><strong>Cloud Database</strong></td>
+                    <td><strong>Neon.tech PostgreSQL</strong></td>
+                    <td>Serverless PostgreSQL with PgBouncer connection pooler hosted on AWS us-east-2.</td>
+                </tr>
+                <tr>
+                    <td><strong>Local Database</strong></td>
+                    <td><strong>H2 In-Memory DB</strong></td>
+                    <td>Zero-configuration local development and rapid automated test execution.</td>
+                </tr>
+                <tr>
+                    <td><strong>Connection Pool</strong></td>
+                    <td><strong>HikariCP</strong></td>
+                    <td>Tuned JDBC pool with keepalive pings, idle timeouts, and connection leak protection.</td>
+                </tr>
+                <tr>
+                    <td><strong>Caching</strong></td>
+                    <td><strong>Spring Cache &amp; Warmup</strong></td>
+                    <td>Sub-millisecond API response caching across hot endpoints pre-warmed on boot.</td>
+                </tr>
+                <tr>
+                    <td><strong>Frontend UI</strong></td>
+                    <td><strong>Semantic HTML5 &amp; Vanilla CSS</strong></td>
+                    <td>Zero framework bloat. Custom CSS tokens for dark/light themes and glassmorphism.</td>
+                </tr>
+                <tr>
+                    <td><strong>Frontend Logic</strong></td>
+                    <td><strong>Vanilla JavaScript (ES6+)</strong></td>
+                    <td>Lightweight client (<code>app.js</code>, <code>api.js</code>) with in-flight request deduplication.</td>
+                </tr>
+                <tr>
+                    <td><strong>Generative AI</strong></td>
+                    <td><strong>Google Gemini API</strong></td>
+                    <td>AI-generated quizzes and curriculum pathways with curated offline fallback.</td>
+                </tr>
+                <tr>
+                    <td><strong>Authentication</strong></td>
+                    <td><strong>Google Identity Services</strong></td>
+                    <td>One-tap OAuth 2.0 authentication support.</td>
+                </tr>
+                <tr>
+                    <td><strong>Browser Testing</strong></td>
+                    <td><strong>Microsoft Playwright Java 1.48.0</strong></td>
+                    <td>Automated E2E browser flows, headed demo mode, and screenshot capture.</td>
+                </tr>
+                <tr>
+                    <td><strong>DevOps &amp; IaC</strong></td>
+                    <td><strong>Docker &amp; AWS CloudFormation</strong></td>
+                    <td>Multi-stage containerization and templates for AWS App Runner &amp; ECS Fargate.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>4. How to Run Demonstrations Locally</h2>
+        <p>Run these commands in PowerShell from the project folder:</p>
+        
+        <h3>Watch Playwright Automate in Live Visible Browser:</h3>
+        <pre><code># Watch the full Database-to-Frontend Integrity test:
+mvn test "-Dtest=DatabaseToFrontendIntegrityUiTest" "-Dplaywright.headless=false"
+
+# Watch the cloud Neon PostgreSQL verification:
+mvn test "-Dtest=NeonDatabaseToFrontendIntegrityUiTest" "-Dplaywright.headless=false"
+
+# Watch the Interactive Daily Quiz Sprint:
+mvn test "-Dtest=QuizArenaInteractiveUiTest" "-Dplaywright.headless=false"</code></pre>
+
+        <h3>Explore in Browser:</h3>
+        <p>Navigate to <code>http://localhost:8080</code> in Microsoft Edge or Google Chrome to experience the live platform.</p>
+    </section>
+
+    <footer class="footer">
+        <span>Career Pulse &copy; 2026 Enterprise Learning Platform</span>
+        <span>Generated for shigupta44 &bull; Downloads Folder</span>
+    </footer>
+
+</div>
+</body>
+</html>

@@ -8,6 +8,7 @@ import com.learning.platform.model.CourseModule;
 import com.learning.platform.model.Enrollment;
 import com.learning.platform.model.Lesson;
 import com.learning.platform.model.StudyLog;
+import com.learning.platform.model.User;
 import com.learning.platform.repository.CourseRepository;
 import com.learning.platform.repository.EnrollmentRepository;
 import com.learning.platform.repository.StudyLogRepository;
@@ -24,6 +25,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,18 +45,21 @@ public class CourseService {
     private final StudyLogRepository studyLogRepository;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final ResendEmailService resendEmailService;
     private final Map<String, Course> courseCache = new ConcurrentHashMap<>();
 
     public CourseService(CourseRepository courseRepository,
                          EnrollmentRepository enrollmentRepository,
                          StudyLogRepository studyLogRepository,
                          ObjectMapper objectMapper,
-                         UserService userService) {
+                         UserService userService,
+                         ResendEmailService resendEmailService) {
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.studyLogRepository = studyLogRepository;
         this.objectMapper = objectMapper;
         this.userService = userService;
+        this.resendEmailService = resendEmailService;
     }
 
     @PostConstruct
@@ -246,7 +251,9 @@ public class CourseService {
     public Optional<Enrollment> toggleLesson(String userId, String courseId, String lessonId) {
         List<Enrollment> list = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
         Enrollment enrollment;
+        boolean wasNewEnrollment = false;
         if (list.isEmpty()) {
+            wasNewEnrollment = true;
             enrollment = new Enrollment(userId, courseId);
             enrollment.setTotalLessons(13);
             enrollment.setCompletedLessonsCount(0);
@@ -323,12 +330,17 @@ public class CourseService {
             if (!enrollment.isXpAwarded()) {
                 int reward = (c != null && c.getXpReward() > 0) ? c.getXpReward() : 200;
                 enrollment.setXpAwarded(true);
+                final Enrollment completedEnrollment = enrollment;
                 CompletableFuture.runAsync(() -> {
                     try {
                         userService.awardCourseCompletionXp(userId, reward);
                         log.info("Awarded {} course completion XP to user {} for plan {}", reward, userId, courseId);
+                        User u = userService.getUserById(userId).orElse(null);
+                        if (u != null && c != null) {
+                            resendEmailService.sendCourseCompletionEmail(u, c, completedEnrollment);
+                        }
                     } catch (Exception e) {
-                        log.warn("Async awardCourseCompletionXp error: {}", e.getMessage());
+                        log.warn("Async awardCourseCompletionXp/email error: {}", e.getMessage());
                     }
                 });
             }
@@ -337,7 +349,101 @@ public class CourseService {
             enrollment.setCompletedAt(null);
         }
 
-        return Optional.of(enrollmentRepository.save(enrollment));
+        Enrollment saved = enrollmentRepository.save(enrollment);
+
+        if (wasNewEnrollment) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    User u = userService.getUserById(userId).orElse(null);
+                    if (u != null && c != null) {
+                        resendEmailService.sendEnrollmentEmail(u, c);
+                    }
+                } catch (Exception e) {
+                    log.warn("Async enrollment email error: {}", e.getMessage());
+                }
+            });
+        }
+
+        return Optional.of(saved);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = "dashboard", key = "#userId"),
+            @CacheEvict(value = "enrolled_courses", key = "#userId")
+    })
+    public Enrollment enrollInCourse(String userId, String courseId) {
+        List<Enrollment> list = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
+        if (!list.isEmpty()) {
+            return list.get(0);
+        }
+
+        Course c = getCachedCourse(courseId);
+        Enrollment en = new Enrollment(userId, courseId);
+        int total = 0;
+        int totalMins = 0;
+        if (c != null && c.getModules() != null) {
+            for (CourseModule m : c.getModules()) {
+                if (m.getLessons() != null) {
+                    total += m.getLessons().size();
+                    for (Lesson l : m.getLessons()) {
+                        totalMins += l.getDurationMinutes();
+                    }
+                }
+            }
+        }
+        en.setTotalLessons(total > 0 ? total : 13);
+        en.setCompletedLessonsCount(0);
+        en.setProgressPercentage(0);
+        en.setRemainingHours(totalMins > 0 ? (Math.round((totalMins / 60.0) * 10.0) / 10.0) : 6.0);
+        en.setIsCoreTrack(false);
+
+        Enrollment saved = enrollmentRepository.save(en);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                User u = userService.getUserById(userId).orElse(null);
+                if (u != null && c != null) {
+                    resendEmailService.sendEnrollmentEmail(u, c);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to dispatch enrollment email: {}", e.getMessage());
+            }
+        });
+
+        return saved;
+    }
+
+    @Transactional
+    public Map<String, Object> recordLessonActivity(String userId, String courseId, String lessonId, String activityType, int progressPercent, int timeSpentSeconds) {
+        boolean videoConditionMet = "VIDEO".equalsIgnoreCase(activityType) && progressPercent >= 80;
+        boolean readingConditionMet = "READING".equalsIgnoreCase(activityType) && (progressPercent >= 85 || (progressPercent >= 70 && timeSpentSeconds >= 15));
+        boolean otherConditionMet = !"VIDEO".equalsIgnoreCase(activityType) && !"READING".equalsIgnoreCase(activityType) && progressPercent >= 80;
+
+        boolean satisfied = videoConditionMet || readingConditionMet || otherConditionMet;
+
+        List<Enrollment> list = enrollmentRepository.findByUserIdAndCourseId(userId, courseId);
+        Enrollment enrollment = list.isEmpty() ? null : list.get(0);
+        boolean alreadyCompleted = enrollment != null && enrollment.getCompletedLessonIds() != null && enrollment.getCompletedLessonIds().contains(lessonId);
+
+        boolean toggled = false;
+        if (satisfied && !alreadyCompleted) {
+            Optional<Enrollment> updated = toggleLesson(userId, courseId, lessonId);
+            if (updated.isPresent()) {
+                enrollment = updated.get();
+                toggled = true;
+            }
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("lessonId", lessonId);
+        res.put("activityType", activityType);
+        res.put("progressPercent", progressPercent);
+        res.put("timeSpentSeconds", timeSpentSeconds);
+        res.put("requirementMet", satisfied);
+        res.put("lessonCompleted", alreadyCompleted || toggled);
+        res.put("enrollment", enrollment);
+        return res;
     }
 
     /**

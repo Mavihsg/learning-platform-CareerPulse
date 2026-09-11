@@ -97,6 +97,26 @@ public class CourseController {
                 .orElseGet(() -> ResponseEntity.badRequest().body(ApiResponse.error("Unable to update lesson progress")));
     }
 
+    @PostMapping("/{courseId}/enroll")
+    public ResponseEntity<ApiResponse<Enrollment>> enrollCourse(
+            @PathVariable String courseId,
+            @RequestParam(defaultValue = "user_1") String userId) {
+        Enrollment enrollment = courseService.enrollInCourse(userId, courseId);
+        return ResponseEntity.ok(ApiResponse.ok("Enrolled successfully! Notification email dispatched.", enrollment));
+    }
+
+    @PostMapping("/{courseId}/lessons/{lessonId}/activity-complete")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> recordActivity(
+            @PathVariable String courseId,
+            @PathVariable String lessonId,
+            @RequestParam(defaultValue = "user_1") String userId,
+            @RequestParam(defaultValue = "READING") String activityType,
+            @RequestParam(defaultValue = "100") int progressPercent,
+            @RequestParam(defaultValue = "20") int timeSpentSeconds) {
+        java.util.Map<String, Object> result = courseService.recordLessonActivity(userId, courseId, lessonId, activityType, progressPercent, timeSpentSeconds);
+        return ResponseEntity.ok(ApiResponse.ok("Activity recorded successfully", result));
+    }
+
     @GetMapping("/{courseId}/enrollment/{userId}")
     public ResponseEntity<ApiResponse<Enrollment>> getEnrollment(
             @PathVariable String courseId,

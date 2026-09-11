@@ -62,6 +62,10 @@ const API = {
             this.clearCache('/analytics');
             this.clearCache('/users');
             this.clearCache('/discussions');
+            this.clearCache('/notifications/recent-emails');
+        } else if (endpoint.includes('/notifications')) {
+            this.clearCache('/notifications/recent-emails');
+            this.clearCache('/notifications/status');
         } else {
             this.clearCache(endpoint);
         }
@@ -294,6 +298,33 @@ const API = {
             acceptedReplyId,
             resolvedByUserId: userId
         });
+    },
+
+    // =========================================================================
+    // ENROLLMENT & ACTIVITY COMPLETION API
+    // =========================================================================
+    async enrollCourse(courseId, userId = 'user_1') {
+        return this.post(`/courses/${encodeURIComponent(courseId)}/enroll?userId=${encodeURIComponent(userId)}`);
+    },
+
+    async recordLessonActivity(courseId, lessonId, userId = 'user_1', activityType = 'READING', progressPercent = 100, timeSpentSeconds = 20) {
+        return this.post(`/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/activity-complete?userId=${encodeURIComponent(userId)}&activityType=${encodeURIComponent(activityType)}&progressPercent=${progressPercent}&timeSpentSeconds=${timeSpentSeconds}`);
+    },
+
+    // =========================================================================
+    // RESEND EMAIL NOTIFICATIONS API
+    // =========================================================================
+    async getRecentEmails() {
+        this.clearCache('/notifications/recent-emails');
+        return this.get('/notifications/recent-emails');
+    },
+
+    async sendTestEmail(to = 'delivered@resend.dev', subject = 'Test Notification from CareerPulse') {
+        return this.post(`/notifications/send-test?to=${encodeURIComponent(to)}&subject=${encodeURIComponent(subject)}`);
+    },
+
+    async getNotificationStatus() {
+        return this.get('/notifications/status');
     }
 };
 

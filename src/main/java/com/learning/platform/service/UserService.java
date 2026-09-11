@@ -11,6 +11,8 @@ import com.learning.platform.repository.RoleBenchmarkRepository;
 import com.learning.platform.repository.StudyLogRepository;
 import com.learning.platform.repository.UserRepository;
 import com.learning.platform.repository.UserSkillRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -21,26 +23,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final RoleBenchmarkRepository roleBenchmarkRepository;
     private final UserSkillRepository userSkillRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final StudyLogRepository studyLogRepository;
+    private final ResendEmailService resendEmailService;
 
     public UserService(UserRepository userRepository,
                        RoleBenchmarkRepository roleBenchmarkRepository,
                        UserSkillRepository userSkillRepository,
                        EnrollmentRepository enrollmentRepository,
-                       StudyLogRepository studyLogRepository) {
+                       StudyLogRepository studyLogRepository,
+                       ResendEmailService resendEmailService) {
         this.userRepository = userRepository;
         this.roleBenchmarkRepository = roleBenchmarkRepository;
         this.userSkillRepository = userSkillRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.studyLogRepository = studyLogRepository;
+        this.resendEmailService = resendEmailService;
     }
 
     @Cacheable(value = "all_users")
@@ -207,10 +215,24 @@ public class UserService {
             levelTitle = "Novice Explorer";
         }
 
+        int oldLevel = user.getCurrentLevel();
         user.setCurrentLevel(newLevel);
         user.setXpToNextLevel(nextThreshold);
         user.setLevelTitle(levelTitle);
         evaluateBadges(user);
+
+        if (newLevel > oldLevel) {
+            final int lvl = newLevel;
+            final String title = levelTitle;
+            CompletableFuture.runAsync(() -> {
+                try {
+                    resendEmailService.sendMilestoneEmail(user, "LEVEL UP", "Level " + lvl + " reached: " + title,
+                            "You advanced to Level " + lvl + " (" + title + ")! Your technical mastery is shining.", xpAmount);
+                } catch (Exception e) {
+                    log.warn("Failed to dispatch level-up email: {}", e.getMessage());
+                }
+            });
+        }
 
         return Optional.of(userRepository.save(user));
     }
@@ -229,32 +251,50 @@ public class UserService {
                 .count();
 
         boolean changed = false;
+        List<String> newlyUnlockedBadges = new ArrayList<>();
+
         if (completedCourses >= 1 && !badges.contains("BADGE_FIRST_STEP")) {
             badges.add("BADGE_FIRST_STEP");
+            newlyUnlockedBadges.add("First Step: Completed 1 Course");
             changed = true;
         }
         if (completedCourses >= 3 && !badges.contains("BADGE_COURSES_3")) {
             badges.add("BADGE_COURSES_3");
+            newlyUnlockedBadges.add("Triple Threat: Completed 3 Courses");
             changed = true;
         }
         if (completedCourses >= 5 && !badges.contains("BADGE_COURSES_5")) {
             badges.add("BADGE_COURSES_5");
+            newlyUnlockedBadges.add("Polyglot Architect: Completed 5 Courses");
             changed = true;
         }
         if (user.getCurrentXp() >= 1000 && !badges.contains("BADGE_XP_1000")) {
             badges.add("BADGE_XP_1000");
+            newlyUnlockedBadges.add("1K Club: Earned 1,000 XP");
             changed = true;
         }
         if (user.getStreakDays() >= 7 && !badges.contains("BADGE_STREAK_7")) {
             badges.add("BADGE_STREAK_7");
+            newlyUnlockedBadges.add("Habit Master: 7-Day Streak");
             changed = true;
         } else if (user.getStreakDays() >= 3 && !badges.contains("BADGE_STREAK_3")) {
             badges.add("BADGE_STREAK_3");
+            newlyUnlockedBadges.add("Consistency Starter: 3-Day Streak");
             changed = true;
         }
 
         if (changed) {
             userRepository.save(user);
+            for (String badgeName : newlyUnlockedBadges) {
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        resendEmailService.sendMilestoneEmail(user, "BADGE UNLOCKED", badgeName,
+                                "Congratulations! You unlocked the milestone badge: " + badgeName + ".", 150);
+                    } catch (Exception e) {
+                        log.warn("Failed to dispatch badge unlock email: {}", e.getMessage());
+                    }
+                });
+            }
         }
     }
 

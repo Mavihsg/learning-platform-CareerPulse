@@ -30,8 +30,8 @@
       "durationMinutes" : 18,
       "orderIndex" : 1,
       "xpReward" : 30,
-      "content" : "### Key Principles of Relational & Dimensional Modeling\n\nDimensional data modeling separates data into **Facts** (quantitative measurements) and **Dimensions** (contextual descriptors).\n\n```sql\n-- Example Star Schema Fact Table\nCREATE TABLE fact_orders (\n    order_id VARCHAR(36) PRIMARY KEY,\n    customer_key INT REFERENCES dim_customers(customer_key),\n    product_key INT REFERENCES dim_products(product_key),\n    date_key INT REFERENCES dim_date(date_key),\n    quantity INT NOT NULL,\n    total_amount_usd NUMERIC(12, 2) NOT NULL\n);\n```\n\n#### Why Star Schemas Excel in Analytical Engines:\n1. **Simplified Queries**: Minimal joins compared to 3NF transactional schemas.\n2. **Aggressive Vectorization**: Columnar engines quickly sum measures across narrow columns without parsing full rows.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Dimensional Data Modeling: Star vs Snowflake Schemas\n\nDimensional data modeling, popularized by Ralph Kimball, structures data warehouses for analytical clarity and rapid aggregations.\n\n#### 1. Facts vs Dimensions\n* **Fact Tables**: Contain numeric, additive measurements of business events (e.g., `revenue_amount`, `units_sold`, `latency_ms`). They usually feature high row counts and compound foreign keys.\n* **Dimension Tables**: Contain descriptive context (e.g., customer details, geography, product attributes, timestamps). They allow business analysts to slice, dice, and group fact metrics.\n\n```sql\n-- Production Kimball Fact Table\nCREATE TABLE fact_daily_transactions (\n    transaction_id VARCHAR(64) PRIMARY KEY,\n    customer_key BIGINT REFERENCES dim_customers(customer_key),\n    product_key BIGINT REFERENCES dim_products(product_key),\n    date_key INT REFERENCES dim_date(date_key),\n    store_key BIGINT REFERENCES dim_stores(store_key),\n    gross_amount_usd NUMERIC(14, 2) NOT NULL,\n    discount_amount_usd NUMERIC(14, 2) DEFAULT 0.00,\n    net_amount_usd NUMERIC(14, 2) NOT NULL,\n    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);\n```\n\n#### 2. Star Schema vs Snowflake Schema\n| Attribute | Star Schema | Snowflake Schema |\n| :--- | :--- | :--- |\n| **Normalization** | Denormalized dimensions (1NF/2NF) | Normalized sub-dimensions (3NF) |\n| **Join Complexity** | Minimal (1 join from Fact to each Dim) | Multi-hop (joins across hierarchical levels) |\n| **Query Performance** | Blazing fast in columnar engines | Requires complex optimizer heuristics |\n| **Storage Efficiency** | Slightly redundant string storage | Highly compressed |\n\n#### 3. Key Takeaway\nModern columnar cloud analytical databases (Snowflake, BigQuery, ClickHouse) are heavily optimized for Star Schemas because vectorized scan engines compress repeated strings via dictionary encoding without join overhead.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/qWru-b6m030"
     }, {
       "id" : "LES_ADE_02",
       "title" : "Normalization in practice",
@@ -40,8 +40,8 @@
       "durationMinutes" : 25,
       "orderIndex" : 2,
       "xpReward" : 35,
-      "content" : "### Normalization in Modern Data Architectures\n\nWhile OLTP transactional systems demand **3rd Normal Form (3NF)** to avoid update anomalies, analytical data warehouses thrive on controlled denormalization.\n\n#### Summary of Normal Forms:\n* **1NF**: Atomic values, distinct column names, primary key defined.\n* **2NF**: In 1NF and all non-key attributes fully functionally dependent on primary key.\n* **3NF**: In 2NF and no transitive dependencies between non-key attributes.\n\n```text\nOLTP (Write-Optimized)  --> Ingestion CDC -->  OLAP / Warehouse (Read-Optimized)\n       [3NF]                                         [Star / Snowflake]\n```",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Normalization in Modern Data Architectures\n\nUnderstanding the mathematical balance between transactional normalization and analytical denormalization.\n\n#### The 3 Traditional Normal Forms:\n1. **First Normal Form (1NF)**:\n   - Each column contains atomic (indivisible) values.\n   - No repeating groups or arrays stored as delimiter-separated strings.\n   - Unique primary key uniquely identifies each row.\n2. **Second Normal Form (2NF)**:\n   - Must satisfy 1NF.\n   - All non-key attributes are fully functionally dependent on the entire primary key (eliminates partial key dependencies in composite keys).\n3. **Third Normal Form (3NF)**:\n   - Must satisfy 2NF.\n   - No transitive dependencies (no non-key attribute depends on another non-key attribute: `X -> Y -> Z`).\n\n```text\n+-----------------------+              +-----------------------------+\n|    OLTP Database      |              |   Analytical Warehouse      |\n|  Normalized (3NF)     | === CDC ===> |  Denormalized Star Schema   |\n|  - Write-optimized    |   Debezium   |  - Read-optimized           |\n|  - Zero redundancy    |   & Kafka    |  - Vectorized aggregations  |\n+-----------------------+              +-----------------------------+\n```\n\n#### Why We Denormalize in Analytics:\nIn operational systems, update anomalies can corrupt ledger states. However, in OLAP systems, data is append-only or batch-upserted, making read throughput the primary optimization target.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/UrYLYV7WSHM"
     }, {
       "id" : "LES_ADE_03",
       "title" : "Exercise: model a storefront",
@@ -50,8 +50,8 @@
       "durationMinutes" : 40,
       "orderIndex" : 3,
       "xpReward" : 55,
-      "content" : "### Storefront Modeling Exercise\n\n#### Requirements:\n1. Model customer purchase events with order line items.\n2. Handle slowly changing customer address history (SCD Type 2).\n3. Ensure date partitioning by `order_date_utc`.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Storefront Modeling Exercise: Architecture Specification\n\n#### Problem Statement\nYou are designing the analytics warehouse schema for a multi-region e-commerce marketplace processing 5,000 orders/minute.\n\n#### Core Architectural Requirements:\n1. **Grain Definition**: One row in the fact table represents one line item of an order.\n2. **Slowly Changing Dimensions (SCD Type 2)**:\n   - Track customer shipping addresses over time.\n   - When a customer moves, close the previous record (`valid_to = NOW()`, `is_current = FALSE`) and insert a new version with an incremented surrogate key.\n3. **Partitioning Strategy**:\n   - Partition fact tables by `date_key` (e.g. `YYYYMMDD`) to allow partition pruning on date-bounded dashboard queries.\n\n```sql\n-- SCD Type 2 Dimension Table\nCREATE TABLE dim_customers_scd2 (\n    customer_surrogate_key BIGSERIAL PRIMARY KEY,\n    customer_business_id VARCHAR(36) NOT NULL,\n    customer_tier VARCHAR(20) NOT NULL,\n    shipping_city VARCHAR(100) NOT NULL,\n    valid_from TIMESTAMP WITH TIME ZONE NOT NULL,\n    valid_to TIMESTAMP WITH TIME ZONE,\n    is_current BOOLEAN DEFAULT TRUE\n);\nCREATE INDEX idx_scd2_lookup ON dim_customers_scd2(customer_business_id, is_current);\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/7S_tz1z_5bA"
     } ]
   }, {
     "id" : "MOD_ADE_02",
@@ -68,8 +68,8 @@
       "durationMinutes" : 22,
       "orderIndex" : 1,
       "xpReward" : 35,
-      "content" : "### Latency Spectrum: Batch vs Micro-batch vs True Streaming\n\n* **Batch (Hourly/Daily)**: High throughput, cost-efficient, resilient backfills.\n* **Micro-Batch (10s - 1m)**: Apache Spark Streaming, balance of latency and overhead.\n* **Continuous Streaming (<100ms)**: Apache Flink / Kafka Streams, required for real-time fraud detection and instant telemetry.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Latency Spectrum: Batch vs Micro-Batch vs True Streaming\n\nData pipelines must be chosen based on business SLA, engineering complexity, and infrastructure cost.\n\n#### Architectural Comparison:\n```text\nBatch (Hours/Days)          Micro-batch (1s - 60s)         Continuous Streaming (<100ms)\n+-----------------------+   +------------------------+     +------------------------+\n| Airflow + Spark Batch |   | Spark Structured Strm  |     | Apache Flink / Kafka   |\n| High throughput       |   | Moderate latency       |     | Sub-second alerts      |\n| Lowest unit cost      |   | Balanced reliability   |     | Highest state overhead |\n+-----------------------+   +------------------------+     +------------------------+\n```\n\n#### Key Design Criteria:\n1. **Windowing & Watermarks**: How do you handle out-of-order events arriving 20 minutes late?\n2. **Checkpointing**: In streaming engines, states are snapshot to persistent storage (e.g. S3/MinIO) to guarantee fault tolerance without duplicates.\n3. **Cost vs Value**: Never deploy a 24/7 streaming cluster for data that decision-makers only inspect once a morning!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/Bjhp_pDqIq8"
     }, {
       "id" : "LES_ADE_05",
       "title" : "Anatomy of a DAG",
@@ -78,8 +78,8 @@
       "durationMinutes" : 30,
       "orderIndex" : 2,
       "xpReward" : 40,
-      "content" : "### Directed Acyclic Graph (DAG) Execution Principles\n\nIn workflow engines (Airflow, Prefect, Dagster), workflows are represented as DAGs. A node executes only when all predecessor upstream tasks finish in a SUCCESS state.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Anatomy of an Apache Airflow DAG\n\nIn workflow orchestration, a Directed Acyclic Graph (DAG) defines dependencies between discrete tasks.\n\n```python\nfrom datetime import datetime, timedelta\nfrom airflow import DAG\nfrom airflow.operators.python import PythonOperator\nfrom airflow.providers.postgres.operators.postgres import PostgresOperator\n\ndefault_args = {\n    'owner': 'data_platform',\n    'depends_on_past': False,\n    'email_on_failure': True,\n    'retries': 3,\n    'retry_delay': timedelta(minutes=5),\n}\n\nwith DAG(\n    dag_id='daily_customer_mart_sync',\n    default_args=default_args,\n    schedule_interval='@daily',\n    start_date=datetime(2026, 1, 1),\n    catchup=False,\n    max_active_runs=1,\n) as dag:\n    \n    extract_cdc = PythonOperator(\n        task_id='extract_upstream_cdc',\n        python_callable=fetch_payment_events,\n    )\n    \n    validate_schema = PythonOperator(\n        task_id='validate_staged_parquet',\n        python_callable=run_great_expectations,\n    )\n    \n    build_marts = PostgresOperator(\n        task_id='dbt_run_marts',\n        sql='CALL sync_daily_marts();',\n    )\n    \n    extract_cdc >> validate_schema >> build_marts\n```\n\n#### Vital Production Rules:\n* **Task Idempotency**: If a task fails midway and retries, it must clean up incomplete partition artifacts.\n* **No Heavy Processing in Top-Level Code**: DAG files are parsed every 30 seconds by the Airflow Scheduler; never make external API calls or database connections outside task callables!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/AHMm1OfC0Es"
     }, {
       "id" : "LES_ADE_06",
       "title" : "Build a daily ingest",
@@ -88,8 +88,8 @@
       "durationMinutes" : 90,
       "orderIndex" : 3,
       "xpReward" : 90,
-      "content" : "### Project: Idempotent Daily REST Ingestion\n\n**Goal**: Implement a Python worker that queries an external payments API and writes partitioned JSON/Parquet outputs to cloud storage.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Project: Idempotent Daily REST Ingestion Engine\n\n#### Project Goal\nBuild a Python worker that ingests paginated transactions from an external payment gateway REST API, enforces strict JSON schema validation, and saves partitioned Parquet files to cloud object storage.\n\n#### Key Engineering Deliverables:\n1. **Exponential Backoff**: Handle HTTP 429 Rate Limits and 503 Service Unavailable with jittered backoff.\n2. **Atomic Writing**: Write raw Parquet files to a `.tmp` scratch prefix first. Only rename/move to `s3://lakehouse/raw/payments/year=YYYY/month=MM/` upon 100% write success.\n3. **Partition Watermark**: Save the high-watermark `last_processed_timestamp` to prevent re-ingesting duplicate records during cron execution.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/O_W_W6w_62w"
     }, {
       "id" : "LES_ADE_07",
       "title" : "Idempotency and retries",
@@ -98,8 +98,8 @@
       "durationMinutes" : 20,
       "orderIndex" : 4,
       "xpReward" : 35,
-      "content" : "### The Golden Rule of Pipeline Reliability: Idempotency\n\nExecuting a pipeline $N$ times with the same input partition MUST produce the exact same final state as executing it once.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### The Golden Rule of Pipeline Reliability: Idempotency\n\n> **Definition**: An operation is **idempotent** if applying it once produces the exact same result as applying it $N$ times with identical inputs.\n\n#### Common Anti-Patterns vs Solutions:\n* **Anti-Pattern**: `INSERT INTO fact_orders SELECT * FROM staging_orders;`\n  * *Result*: If the workflow retries due to downstream network timeout, duplicate orders are recorded!\n* **Solution 1 - Partition Overwrite**:\n  ```sql\n  DELETE FROM fact_orders WHERE order_date = '2026-09-11';\n  INSERT INTO fact_orders SELECT * FROM staging_orders WHERE order_date = '2026-09-11';\n  ```\n* **Solution 2 - Atomic Upsert (Merge)**:\n  ```sql\n  MERGE INTO fact_orders target\n  USING staging_orders source\n  ON target.order_id = source.order_id\n  WHEN MATCHED THEN UPDATE SET total_amount = source.total_amount, updated_at = NOW()\n  WHEN NOT MATCHED THEN INSERT (order_id, total_amount, created_at) VALUES (source.order_id, source.total_amount, NOW());\n  ```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/IH1-0hwFBRQ"
     } ]
   }, {
     "id" : "MOD_ADE_03",
@@ -116,8 +116,8 @@
       "durationMinutes" : 16,
       "orderIndex" : 1,
       "xpReward" : 30,
-      "content" : "### Vectorized Scans in Apache Parquet\n\nParquet organizes data into Row Groups containing Column Chunks. Each page records min/max dictionary metadata enabling scan skipping.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Vectorized Scans in Apache Parquet\n\nApache Parquet is an open-source, columnar storage format optimized for high-performance analytical queries.\n\n#### Internal Structure of a Parquet File:\n```text\n+-------------------------------------------------------------+\n| PARQUET FILE CONTAINER                                     |\n| +---------------------------------------------------------+ |\n| | Row Group 1 (~128MB - 512MB)                            | |\n| |  [Column Chunk: customer_id] (Dictionary Encoded)        | |\n| |  [Column Chunk: amount_usd]  (Snappy/ZSTD Compressed)   | |\n| |  [Column Chunk: status]      (RLE Run-Length Encoded)   | |\n| +---------------------------------------------------------+ |\n| | File Metadata & Footer (Min/Max statistics per page)    | |\n+-------------------------------------------------------------+\n```\n\n#### Predicate Pushdown (Min/Max Pruning):\nIf your query is `WHERE amount_usd > 10000`, the query engine checks the footer statistics of Row Group 1. If `max_amount_usd` is 450, the entire 128MB Row Group is skipped without decompression or reading bytes from disk!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/rWz_1z7VvWc"
     }, {
       "id" : "LES_ADE_09",
       "title" : "Project layout for transforms",
@@ -126,8 +126,8 @@
       "durationMinutes" : 28,
       "orderIndex" : 2,
       "xpReward" : 45,
-      "content" : "### Clean Transformation Architecture\n\n1. **`models/staging`**: 1-to-1 with raw sources, renaming fields, casting data types.\n2. **`models/intermediate`**: Business logic joins and complex grouping.\n3. **`models/marts`**: Final dimensional star schemas consumed by BI and ML models.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### dbt Project Layout for Enterprise Transformations\n\nMaintainability in modern data stacks requires a disciplined directory structure.\n\n```text\nmodels/\n├── staging/                <-- 1:1 with source tables, clean names, cast types\n│   ├── stripe/\n│   │   ├── stg_stripe__charges.sql\n│   │   └── stg_stripe__charges.yml\n│   └── salesforce/\n├── intermediate/           <-- Joins across staging models, complex logic\n│   └── int_customer_orders_joined.sql\n└── marts/                  <-- High-value business dimensions and facts\n    ├── core/\n    │   ├── dim_customers.sql\n    │   └── fct_orders.sql\n    └── finance/\n```\n\n#### Essential Rules:\n1. Only `staging` models ever select directly from `source()` tables.\n2. All downstream models reference upstream tables strictly using `{{ ref('stg_stripe__charges') }}` to build the automated dependency DAG!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/5rNquRnNb4E"
     }, {
       "id" : "LES_ADE_10",
       "title" : "Incremental models",
@@ -136,8 +136,8 @@
       "durationMinutes" : 45,
       "orderIndex" : 3,
       "xpReward" : 75,
-      "content" : "### Watermarking Incremental Loads\n\nImplement an incremental SQL filter selecting records modified since the latest existing timestamp.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Incremental Models & Watermarking\n\nRebuilding 100 million rows every night is cost-prohibitive. Incremental models transform only newly inserted or modified records.\n\n```sql\n{{ config(\n    materialized='incremental',\n    unique_key='order_id',\n    incremental_strategy='merge'\n) }}\n\nSELECT\n    order_id,\n    customer_id,\n    order_status,\n    total_amount_usd,\n    updated_at\nFROM {{ ref('stg_ecommerce__orders') }}\n\n{% if is_incremental() %}\n  -- Lookback window of 3 days handles out-of-order late arriving events\n  WHERE updated_at >= (SELECT MAX(updated_at) - INTERVAL '3 day' FROM {{ this }})\n{% endif %}\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/kYJ2q7lQ9q8"
     } ]
   }, {
     "id" : "MOD_ADE_04",
@@ -154,8 +154,8 @@
       "durationMinutes" : 20,
       "orderIndex" : 1,
       "xpReward" : 35,
-      "content" : "### Assertions in Production Pipelines\n\nAlways validate data before serving downstreams:\n* Non-null assertions on foreign keys\n* Accepted range checks on monetary totals\n* Unique index checks on surrogate identifiers",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Data Quality Testing & Schema Contracts\n\nAutomate validation before downstream stakeholders look at broken reports.\n\n#### Schema Tests (`models/marts/core/schema.yml`):\n```yaml\nversion: 2\nmodels:\n  - name: fct_orders\n    description: \"Daily finalized e-commerce customer orders\"\n    columns:\n      - name: order_id\n        tests:\n          - unique\n          - not_null\n      - name: net_amount_usd\n        tests:\n          - not_null\n          - dbt_expectations.expect_column_values_to_be_between:\n              min_value: 0\n              max_value: 100000\n```\n\n#### Singular Custom SQL Tests:\nAny SQL query that returns rows triggers a pipeline test failure:\n```sql\n-- test_no_negative_inventory.sql\nSELECT product_id, stock_quantity\nFROM {{ ref('dim_products') }}\nWHERE stock_quantity < 0;\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/Y3Z2c1f-G58"
     }, {
       "id" : "LES_ADE_12",
       "title" : "SLAs and alerting",
@@ -164,8 +164,8 @@
       "durationMinutes" : 25,
       "orderIndex" : 2,
       "xpReward" : 40,
-      "content" : "### SLA Calculation & Escalation Ladders\n\nMonitor freshness timestamps versus agreed business SLAs with proactive alert routing.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### SLAs, Heartbeats, and Observability\n\nData engineering SLAs (Service Level Agreements) define freshness, completeness, and accuracy targets.\n\n#### Key Metrics:\n* **Freshness SLA**: *Data must arrive in the warehouse within 45 minutes of creation.*\n* **Mean Time to Detect (MTTD)**: Automated anomaly detection alerts the data on-call engineer within 5 minutes of a silent schema change.\n* **PagerDuty Escalation**: If downstream pipeline execution takes > 120% of its 30-day average runtime, fire an alert before the 8:00 AM CEO dashboard refresh!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/IH1-0hwFBRQ"
     }, {
       "id" : "LES_ADE_13",
       "title" : "Capstone: end-to-end pipeline",
@@ -174,8 +174,8 @@
       "durationMinutes" : 120,
       "orderIndex" : 3,
       "xpReward" : 105,
-      "content" : "### Applied Data Engineering Capstone\n\nDeploy a complete end-to-end ELT pipeline from ingest to verified analytical mart.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Capstone: End-to-End Production Data Pipeline\n\nCongratulations on reaching the Applied Data Engineering Capstone!\n\n#### Final Architecture Checklist:\n1. **Source Ingestion**: Pull events via REST/Kafka and write partitioned Parquet.\n2. **Orchestration**: Configure an Airflow DAG with retry policies and Slack alerts.\n3. **Data Transformation**: Build modular dbt staging, intermediate, and fact models.\n4. **Automated Quality**: Run schema assertions (unique, non-null) and singular financial balance tests.\n5. **Observability**: Verify freshness metrics and latency thresholds.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/a3b1Z1p7Q7g"
     } ]
   } ],
   "quiz" : {
@@ -225,8 +225,8 @@
       "durationMinutes" : 25,
       "orderIndex" : 1,
       "xpReward" : 35,
-      "content" : "### dbt Core Anatomy and Project Layout\n\nOrganize models into modular transformation layers with automated schema testing.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### dbt Project Architecture: Clean Modern Modeling\n\nAnalytics engineers translate raw application logs into reliable metrics that drive business decisions.\n\n#### Directory Architecture:\n* `models/staging/`: Initial cleaning, consistent column names, casting timestamps.\n* `models/intermediate/`: Complex multi-way joins, denormalizing recurring logic.\n* `models/marts/`: Business-facing entities (`dim_users`, `fct_subscriptions`).\n\n```sql\n-- models/staging/stripe/stg_stripe__payments.sql\nwith source as (\n    select * from {{ source('stripe', 'payments') }}\n),\nrenamed as (\n    select\n        id as payment_id,\n        order_id,\n        amount / 100.0 as payment_amount_usd,\n        status as payment_status,\n        created_at as created_at_utc\n    from source\n)\nselect * from renamed\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/5rNquRnNb4E"
     }, {
       "id" : "LES_AE_02",
       "title" : "Automated testing",
@@ -235,8 +235,8 @@
       "durationMinutes" : 35,
       "orderIndex" : 2,
       "xpReward" : 45,
-      "content" : "### Writing Custom dbt Singular Tests\n\nWrite SQL assertions that return 0 rows when data meets expectations.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Automated CI/CD Data Testing\n\nNever push SQL models directly to production without testing against pull-request staging environments.\n\n#### Testing Pipeline:\n1. **GitHub Actions PR Trigger**: Spins up an ephemeral schema e.g. `pr_124_dbt`.\n2. **`dbt build`**: Runs all new models and executes every associated schema test.\n3. **Automated Schema Contract**: If a developer drops or renames an upstream column that breaks downstream reports, the pull request check fails automatically!",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/Y3Z2c1f-G58"
     } ]
   } ],
   "quiz" : null
@@ -272,8 +272,8 @@
       "durationMinutes" : 20,
       "orderIndex" : 1,
       "xpReward" : 30,
-      "content" : "### Writing High-Impact Architecture Decision Records (ADRs)\n\nEvery structural architectural change should record: Title, Status, Context, Decision, Consequences.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### High-Impact Architecture Decision Records (ADR)\n\nAn **Architecture Decision Record (ADR)** documents a critical software architecture choice, including its rationale and consequences.\n\n#### Michael Nygard ADR Template:\n```markdown\n# ADR 014: Adopt Apache Kafka for Transactional Event Streaming\n\n## Status\nAccepted (Date: 2026-09-11)\n\n## Context\nOur monolithic database currently handles synchronous webhooks for payment notifications. During flash sales, connection pool exhaustion causes API timeouts for checkout operations.\n\n## Decision\nWe will decouple checkout confirmation from downstream notifications using Apache Kafka and the Transactional Outbox Pattern.\n\n## Consequences\n### Positive:\n- Checkout API latency reduced by 72%.\n- Zero lost payment events during third-party webhook outages.\n\n### Negative / Trade-offs:\n- Requires managing a Kafka cluster and monitoring consumer group lag.\n- Eventual consistency must be handled by user-facing frontend interfaces.\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/o_3S92HqWdI"
     }, {
       "id" : "LES_TW_02",
       "title" : "Writing API documentation",
@@ -282,8 +282,8 @@
       "durationMinutes" : 30,
       "orderIndex" : 2,
       "xpReward" : 40,
-      "content" : "### API Reference Best Practices\n\nDocument request/response schemas, authentication headers, error codes, and practical curl/SDK examples.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Writing World-Class Developer API Documentation\n\nGreat documentation reduces support tickets and accelerates developer integration.\n\n#### Best Practices:\n1. **Show Real Requests & Responses**: Provide copy-pasteable `curl` commands and complete JSON payloads.\n2. **Document Every Error Code**: Explain what causes `400 Bad Request`, `401 Unauthorized`, and `429 Too Many Requests`.\n3. **Idempotency Guidance**: Detail how client developers should provide `Idempotency-Key` HTTP headers to safely retry payment requests without duplicate charges.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/r_z6uQ0vNqw"
     } ]
   } ],
   "quiz" : null
@@ -366,8 +366,8 @@
       "durationMinutes" : 45,
       "orderIndex" : 1,
       "xpReward" : 60,
-      "content" : "### Spring Cloud Gateway Architecture\n\nLearn how Netty non-blocking filters dispatch traffic dynamically based on path and host headers.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Spring Cloud Gateway Dynamic Routing Architecture\n\nSpring Cloud Gateway provides an API gateway built on Project Reactor, Spring WebFlux, and Netty.\n\n```yaml\nspring:\n  cloud:\n    gateway:\n      routes:\n        - id: catalog_service_route\n          uri: lb://catalog-service\n          predicates:\n            - Path=/api/catalog/**\n            - Method=GET,POST\n          filters:\n            - StripPrefix=1\n            - name: RequestRateLimiter\n              args:\n                redis-rate-limiter.replenishRate: 100\n                redis-rate-limiter.burstCapacity: 200\n```\n\n#### Key Architecture Concepts:\n* **Route**: The basic building block with ID, destination URI, and predicates.\n* **Predicate**: Evaluates HTTP request attributes (headers, paths, cookies).\n* **Filter**: Modifies request and response payloads, attaches correlation IDs (`X-Correlation-Id`), and handles token authentication.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/mS1b9oFqMps"
     }, {
       "id" : "LES_SC_02",
       "title" : "Resilience4j circuit breakers",
@@ -376,8 +376,8 @@
       "durationMinutes" : 50,
       "orderIndex" : 2,
       "xpReward" : 70,
-      "content" : "### Circuit Breaker State Machine\n\nUnderstand CLOSED, OPEN, and HALF_OPEN states and how rate limiters prevent cascading system failures.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Resilience4j Circuit Breaker State Machine\n\nProtect distributed systems from cascading downstream failures.\n\n```text\n       [Failure Rate < Threshold]\n            +----------------+\n      +---> |     CLOSED     | <----+\n      |     +----------------+      |\n[Successes]          |         [Call Attempted]\n      |      [Failure Rate          |\n      |       >= Threshold]         |\n      |              v              |\n      |     +----------------+      |\n      +---- |   HALF_OPEN    |      |\n            +----------------+      |\n                     ^              |\n             [Wait Duration]        |\n                     |              |\n            +----------------+      |\n            |      OPEN      | -----+\n            +----------------+\n```\n\n```java\n@CircuitBreaker(name = \"paymentService\", fallbackMethod = \"fallbackProcessPayment\")\npublic PaymentResponse processPayment(PaymentRequest request) {\n    return restClient.post().uri(\"/charges\").body(request).retrieve().body(PaymentResponse.class);\n}\n\npublic PaymentResponse fallbackProcessPayment(PaymentRequest request, Throwable t) {\n    log.warn(\"Payment service unavailable! Enqueuing to offline retry queue. Reason: {}\", t.getMessage());\n    return PaymentResponse.queued(\"Transaction queued for asynchronous settlement\");\n}\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/9SGDpanrc8U"
     } ]
   } ],
   "quiz" : null
@@ -413,8 +413,8 @@
       "durationMinutes" : 20,
       "orderIndex" : 1,
       "xpReward" : 25,
-      "content" : "### Process Isolation in Modern Operating Systems\n\nNamespaces and cgroups form the isolation primitives behind Linux containers.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Linux Containers: Namespaces & Control Groups (cgroups)\n\nContainers are not virtual machines; they are standard Linux processes restricted by kernel features.\n\n#### Kernel Primitives:\n* **PID Namespace**: Provides an isolated view of process trees. The container process thinks it is PID 1.\n* **NET Namespace**: Gives each container its own loopback interface, IP routing table, and iptables rules.\n* **MNT Namespace**: Mounts isolated filesystem trees (`chroot` / `pivot_root`).\n* **cgroups v2**: Enforces CPU, memory, disk I/O, and pids limits to avoid noisy-neighbor starvation.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/fqMOX6JJhGo"
     }, {
       "id" : "COURSE_FB025211_MOD_1_LES_2",
       "title" : "Images and layers",
@@ -423,8 +423,8 @@
       "durationMinutes" : 25,
       "orderIndex" : 2,
       "xpReward" : 25,
-      "content" : "### OCI Image Specification & OverlayFS\n\nContainer images are composed of immutable read-only layers with a copy-on-write overlay.",
-      "videoUrl" : null
+      "content" : "### Docker Multi-Stage Builds & Minimal Images\n\nOptimizing OCI image size and reducing attack surface.\n\n```dockerfile\n# Build stage\nFROM maven:3.9-eclipse-temurin-21-alpine AS builder\nWORKDIR /app\nCOPY pom.xml .\nRUN mvn dependency:go-offline\nCOPY src ./src\nRUN mvn clean package -DskipTests\n\n# Runtime stage\nFROM eclipse-temurin:21-jre-alpine\nRUN addgroup -S appgroup && adduser -S appuser -G appgroup\nUSER appuser\nWORKDIR /app\nCOPY --from=builder /app/target/*.jar app.jar\nEXPOSE 8080\nENTRYPOINT [\"java\", \"-jar\", \"app.jar\"]\n```\n\n#### Why Multi-Stage Builds Matter:\nCompilers, test frameworks, and source code are stripped from the final artifact, reducing image size from 800MB to under 120MB and eliminating common CVE vulnerabilities.",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/gAkwW2tuIqE"
     } ]
   }, {
     "id" : "COURSE_FB025211_MOD_2",
@@ -441,8 +441,8 @@
       "durationMinutes" : 18,
       "orderIndex" : 1,
       "xpReward" : 25,
-      "content" : "### Canary vs Blue-Green Deployments\n\nLearn how traffic splitting minimizes blast radius during software releases.",
-      "videoUrl" : "https://www.youtube-nocookie.com/embed/1FUcniACzmc"
+      "content" : "### Production Rollout Strategies: Blue-Green vs Canary\n\nHow to release software changes without taking system downtime.\n\n#### Strategy Matrix:\n| Release Strategy | Description | Rollback Speed | Resource Cost |\n| :--- | :--- | :--- | :--- |\n| **Blue-Green** | Two identical production environments; switch router traffic 100% | Instantaneous (flip router pointer) | 200% capacity |\n| **Canary** | Route small percentage (5%) to new version, monitor telemetry | Fast (scale canary to 0) | Low (~105% capacity) |\n| **Rolling** | Incrementally replace old pods one by one | Slow (must roll back pod by pod) | Baseline (100-120%) |",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/845CggFL4VU"
     }, {
       "id" : "COURSE_FB025211_MOD_2_LES_2",
       "title" : "Exercise: blue-green",
@@ -451,8 +451,8 @@
       "durationMinutes" : 45,
       "orderIndex" : 2,
       "xpReward" : 25,
-      "content" : "### Hands-on: Zero-Downtime Blue-Green Switch\n\nConfigure an Ingress resource to route 100% of live traffic to the green deployment.",
-      "videoUrl" : null
+      "content" : "### Hands-on: Zero-Downtime Blue-Green Switch\n\n#### Scenario\nSwitch traffic from `v1` (Blue) to `v2` (Green) using Kubernetes Service selectors.\n\n```yaml\n# Active Service\napiVersion: v1\nkind: Service\nmetadata:\n  name: web-service\nspec:\n  ports:\n  - port: 80\n    targetPort: 8080\n  selector:\n    # Change 'version: blue' to 'version: green' for instantaneous traffic flip\n    app: web\n    version: green\n```",
+      "videoUrl" : "https://www.youtube-nocookie.com/embed/BmrQj2W2r_E"
     } ]
   } ],
   "quiz" : null

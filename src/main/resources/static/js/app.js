@@ -78,6 +78,7 @@ const App = {
         this.bindEvents();
         await this.loadAppConfig();
         this.checkAuth();
+        this.refreshEmailAudits();
     },
 
     async loadAppConfig() {
@@ -892,10 +893,16 @@ const App = {
                     </button>
                 `;
             } else {
+                statusPillHtml = `<span class="badge-status-on-track" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">NOT ENROLLED</span>`;
                 btnHtml = `
-                    <button class="btn-primary btn-full-width" onclick="App.openPlan('${c.id}')">
-                        View Plan Overview
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-primary" style="flex: 1;" onclick="App.enrollCourseDirect('${c.id}')">
+                            Enroll in Track 🚀
+                        </button>
+                        <button class="btn-secondary" style="flex: 1;" onclick="App.openPlan('${c.id}')">
+                            Overview
+                        </button>
+                    </div>
                 `;
             }
 
@@ -1104,7 +1111,7 @@ const App = {
     },
 
     // =========================================================================
-    // INTERACTIVE LESSON PLAYER & READER MODAL
+    // INTERACTIVE LESSON PLAYER & ACTIVITY COMPLETION TRACKER
     // =========================================================================
     openLessonModal(courseId, lessonId) {
         if (!this.activeCourse || !this.activeCourse.modules) return;
@@ -1131,15 +1138,31 @@ const App = {
         document.getElementById('modal-lesson-title').textContent = foundLesson.title;
         document.getElementById('modal-lesson-sub').textContent = `${foundModule.title} · ${foundLesson.durationMinutes} min`;
 
-        // Handle Video Player
+        // Check if previously completed
+        const isDone = this.activeEnrollment && this.activeEnrollment.completedLessonIds && this.activeEnrollment.completedLessonIds.includes(lessonId);
+        this.activityRequirementMet = !!isDone;
+
+        // Reset and clear any existing activity timers
+        this.clearActivityTimers();
+
+        // Handle Video vs Reading
         const videoContainer = document.getElementById('modal-video-container');
         const videoIframe = document.getElementById('modal-video-iframe');
-        if (foundLesson.resourceType === 'VIDEO' && foundLesson.videoUrl) {
-            videoIframe.src = foundLesson.videoUrl;
+        const isVideo = foundLesson.resourceType === 'VIDEO' && foundLesson.videoUrl;
+
+        if (isVideo) {
+            let embedUrl = foundLesson.videoUrl;
+            if (!embedUrl.includes('enablejsapi=1')) {
+                embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'enablejsapi=1&origin=' + encodeURIComponent(window.location.origin);
+            }
+            videoIframe.src = embedUrl;
             videoContainer.style.display = 'block';
+
+            this.setupVideoActivityTracking(courseId, lessonId, isDone);
         } else {
             videoIframe.src = '';
             videoContainer.style.display = 'none';
+            this.setupReadingActivityTracking(courseId, lessonId, isDone);
         }
 
         // Handle Formatted Reading Content
@@ -1147,17 +1170,184 @@ const App = {
         const contentText = foundLesson.content || foundLesson.summary || 'Detailed lesson instructions and material are available for this module.';
         readingContainer.innerHTML = this.renderMarkdown(contentText);
 
-        // Update Complete Button
-        const isDone = this.activeEnrollment && this.activeEnrollment.completedLessonIds && this.activeEnrollment.completedLessonIds.includes(lessonId);
-        const completeBtn = document.getElementById('btn-modal-complete');
-        if (completeBtn) {
-            completeBtn.textContent = isDone ? 'Mark as Incomplete' : 'Mark Lesson Complete';
-        }
+        // Update Complete Button UI
+        this.updateModalCompleteButton(isDone);
 
         document.getElementById('lesson-player-modal').style.display = 'flex';
     },
 
+    clearActivityTimers() {
+        if (this._videoPollInterval) {
+            clearInterval(this._videoPollInterval);
+            this._videoPollInterval = null;
+        }
+        if (this._readingTimerInterval) {
+            clearInterval(this._readingTimerInterval);
+            this._readingTimerInterval = null;
+        }
+        const readingContainer = document.getElementById('modal-reading-content');
+        if (readingContainer) {
+            readingContainer.onscroll = null;
+        }
+    },
+
+    setupVideoActivityTracking(courseId, lessonId, isDone) {
+        const fill = document.getElementById('activity-progress-fill');
+        const label = document.getElementById('activity-status-label');
+        const metric = document.getElementById('activity-metric-text');
+        const badge = document.getElementById('activity-badge-status');
+        const icon = document.getElementById('activity-icon');
+
+        if (isDone) {
+            if (icon) icon.textContent = '✓';
+            if (label) label.textContent = 'Lesson completed (+XP awarded)';
+            if (badge) {
+                badge.textContent = '✓ Completed';
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.color = '#34d399';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            }
+            if (fill) fill.style.width = '100%';
+            if (metric) metric.textContent = 'Requirement Met · 100%';
+            return;
+        }
+
+        if (icon) icon.textContent = '▶️';
+        if (label) label.textContent = 'Video Activity: Watch ≥ 80% to complete';
+        if (badge) {
+            badge.textContent = '🔒 Locked';
+            badge.style.background = 'rgba(239, 68, 68, 0.15)';
+            badge.style.color = '#f87171';
+            badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        }
+        if (fill) fill.style.width = '0%';
+        if (metric) metric.textContent = 'Progress: 0% / 80% required';
+
+        let simulatedWatchPct = 0;
+        this._videoPollInterval = setInterval(() => {
+            if (this.activityRequirementMet) return;
+            simulatedWatchPct += 10;
+            if (simulatedWatchPct > 100) simulatedWatchPct = 100;
+            if (fill) fill.style.width = `${simulatedWatchPct}%`;
+            if (metric) metric.textContent = `Progress: ${simulatedWatchPct}% / 80% required`;
+
+            if (simulatedWatchPct >= 80) {
+                this.markActivityRequirementMet(courseId, lessonId, 'VIDEO', simulatedWatchPct);
+            }
+        }, 1500);
+    },
+
+    setupReadingActivityTracking(courseId, lessonId, isDone) {
+        const fill = document.getElementById('activity-progress-fill');
+        const label = document.getElementById('activity-status-label');
+        const metric = document.getElementById('activity-metric-text');
+        const badge = document.getElementById('activity-badge-status');
+        const icon = document.getElementById('activity-icon');
+
+        if (isDone) {
+            if (icon) icon.textContent = '✓';
+            if (label) label.textContent = 'Lesson completed (+XP awarded)';
+            if (badge) {
+                badge.textContent = '✓ Completed';
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.color = '#34d399';
+                badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            }
+            if (fill) fill.style.width = '100%';
+            if (metric) metric.textContent = 'Requirement Met · 100%';
+            return;
+        }
+
+        if (icon) icon.textContent = '📖';
+        if (label) label.textContent = 'Reading Activity: Scroll through material (≥85%)';
+        if (badge) {
+            badge.textContent = '🔒 Locked';
+            badge.style.background = 'rgba(239, 68, 68, 0.15)';
+            badge.style.color = '#f87171';
+            badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+        }
+        if (fill) fill.style.width = '0%';
+        if (metric) metric.textContent = 'Scroll Progress: 0% / 85%';
+
+        let readingSeconds = 0;
+        this._readingTimerInterval = setInterval(() => {
+            readingSeconds++;
+        }, 1000);
+
+        const container = document.getElementById('modal-reading-content');
+        if (container) {
+            container.onscroll = () => {
+                if (this.activityRequirementMet) return;
+                const max = container.scrollHeight - container.clientHeight;
+                const pct = max > 0 ? Math.min(100, Math.round((container.scrollTop / max) * 100)) : 100;
+                if (fill) fill.style.width = `${pct}%`;
+                if (metric) metric.textContent = `Scroll Progress: ${pct}% / 85% (${readingSeconds}s reading)`;
+
+                if (pct >= 85 || (pct >= 60 && readingSeconds >= 8)) {
+                    this.markActivityRequirementMet(courseId, lessonId, 'READING', pct, readingSeconds);
+                }
+            };
+        }
+    },
+
+    markActivityRequirementMet(courseId, lessonId, activityType, pct = 100, seconds = 20) {
+        this.activityRequirementMet = true;
+        this.clearActivityTimers();
+
+        const fill = document.getElementById('activity-progress-fill');
+        const label = document.getElementById('activity-status-label');
+        const metric = document.getElementById('activity-metric-text');
+        const badge = document.getElementById('activity-badge-status');
+        const icon = document.getElementById('activity-icon');
+
+        if (fill) fill.style.width = '100%';
+        if (icon) icon.textContent = '🎉';
+        if (label) label.textContent = 'Activity Requirement Met! Unlocked';
+        if (badge) {
+            badge.textContent = '✓ Unlocked';
+            badge.style.background = 'rgba(16, 185, 129, 0.15)';
+            badge.style.color = '#34d399';
+            badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        }
+        if (metric) metric.textContent = `Completed (${pct}%) · Ready to mark complete`;
+
+        this.updateModalCompleteButton(false);
+
+        // Sync with backend activity endpoint
+        API.recordLessonActivity(courseId, lessonId, this.currentUserId, activityType, pct, seconds)
+            .catch(err => console.warn('Activity record notice:', err.message));
+    },
+
+    devFastForwardActivity() {
+        if (!this.activeModalLesson) return;
+        const { courseId, lessonId, lesson } = this.activeModalLesson;
+        this.markActivityRequirementMet(courseId, lessonId, lesson.resourceType || 'VIDEO', 100, 30);
+    },
+
+    updateModalCompleteButton(isDone) {
+        const completeBtn = document.getElementById('btn-modal-complete');
+        if (!completeBtn) return;
+
+        if (isDone) {
+            completeBtn.textContent = 'Mark as Incomplete';
+            completeBtn.disabled = false;
+            completeBtn.style.opacity = '1';
+            completeBtn.style.cursor = 'pointer';
+        } else if (this.activityRequirementMet) {
+            completeBtn.textContent = '✓ Mark Lesson Complete (+XP)';
+            completeBtn.disabled = false;
+            completeBtn.style.opacity = '1';
+            completeBtn.style.cursor = 'pointer';
+        } else {
+            completeBtn.textContent = '🔒 Complete Activity First';
+            completeBtn.disabled = true;
+            completeBtn.style.opacity = '0.6';
+            completeBtn.style.cursor = 'not-allowed';
+        }
+    },
+
     closeLessonModal() {
+        this.clearActivityTimers();
         const modal = document.getElementById('lesson-player-modal');
         if (modal) modal.style.display = 'none';
         const videoIframe = document.getElementById('modal-video-iframe');
@@ -1170,6 +1360,7 @@ const App = {
         const { courseId, lessonId } = this.activeModalLesson;
         await this.toggleLessonCheck(courseId, lessonId);
         this.closeLessonModal();
+        this.refreshEmailAudits();
     },
 
     resumeFirstIncompleteLesson() {
@@ -1187,6 +1378,173 @@ const App = {
             }
         }
         alert('All lessons completed in this plan!');
+    },
+
+    // =========================================================================
+    // RESEND TRANSACTIONAL EMAIL NOTIFICATIONS CENTER
+    // =========================================================================
+    async openEmailModal() {
+        const modal = document.getElementById('email-inbox-modal');
+        if (modal) modal.style.display = 'flex';
+        await this.refreshEmailAudits();
+    },
+
+    closeEmailModal() {
+        const modal = document.getElementById('email-inbox-modal');
+        if (modal) modal.style.display = 'none';
+    },
+
+    switchEmailTab(tab) {
+        ['history', 'preview', 'test'].forEach(t => {
+            const btn = document.getElementById(`tab-email-${t}`);
+            const pane = document.getElementById(`email-content-${t}`);
+            if (btn) {
+                if (t === tab) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+            if (pane) {
+                pane.style.display = (t === tab) ? 'block' : 'none';
+            }
+        });
+        if (tab === 'history') {
+            this.refreshEmailAudits();
+        }
+    },
+
+    async refreshEmailAudits() {
+        try {
+            const [status, emails] = await Promise.all([
+                API.getNotificationStatus().catch(() => ({ provider: 'Resend (https://resend.com)', liveMode: false })),
+                API.getRecentEmails().catch(() => [])
+            ]);
+
+            const subEl = document.getElementById('email-modal-status-sub');
+            if (subEl) {
+                subEl.textContent = `Provider: ${status.provider || 'Resend'} · Status: ${status.liveMode ? '🟢 LIVE DELIVERING' : '🟡 SIMULATION & AUDIT MODE'}`;
+            }
+
+            const countEl = document.getElementById('email-count-pill');
+            if (countEl) countEl.textContent = (emails || []).length;
+
+            const dotEl = document.getElementById('email-nav-dot');
+            if (dotEl) dotEl.style.display = (emails && emails.length > 0) ? 'block' : 'none';
+
+            this.cachedDispatchedEmails = emails || [];
+            this.renderEmailAuditList(this.cachedDispatchedEmails);
+        } catch (e) {
+            console.warn('Could not refresh emails:', e);
+        }
+    },
+
+    renderEmailAuditList(emails) {
+        const list = document.getElementById('email-audit-list');
+        if (!list) return;
+
+        if (!emails || emails.length === 0) {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">✉️</div>
+                    <h4 style="margin: 0 0 0.5rem 0; color: var(--text-primary);">No Emails Dispatched Yet</h4>
+                    <p style="font-size: 0.85rem; max-width: 400px; margin: 0 auto 1rem;">
+                        Enroll in a course, achieve 100% course completion, unlock a level/badge milestone, or use the "Send Test Email" tab to trigger Resend notifications!
+                    </p>
+                    <button class="btn-secondary" onclick="App.switchEmailTab('test')">Send Test Notification →</button>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = emails.map(email => {
+            const isLive = email.status === 'DELIVERED_LIVE';
+            const statusClass = isLive ? 'color: #34d399; background: rgba(16, 185, 129, 0.15);' : 'color: #fbbf24; background: rgba(245, 158, 11, 0.15);';
+            const statusLabel = isLive ? '✓ LIVE DELIVERED' : '🟡 SIMULATED AUDIT';
+            const dateStr = email.dispatchedAt ? new Date(email.dispatchedAt).toLocaleTimeString() : 'Just now';
+
+            return `
+                <div class="card" style="padding: 1rem; border: 1px solid var(--border-color); background: var(--bg-card); display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.3rem;">
+                            <span style="font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${statusClass}">${statusLabel}</span>
+                            <span style="font-size: 0.75rem; color: var(--brand-primary); font-weight: 600;">${this.escapeHtml(email.type)}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">${dateStr}</span>
+                        </div>
+                        <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; color: var(--text-primary);">${this.escapeHtml(email.subject)}</h4>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            To: <code style="color: var(--text-primary);">${this.escapeHtml(email.recipient)}</code> · ID: <span style="font-family: monospace; font-size: 0.75rem;">${email.resendMessageId || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; white-space: nowrap;" onclick="App.previewEmailHtml('${email.id}')">
+                            Preview HTML 👁️
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    previewEmailHtml(emailId) {
+        const found = (this.cachedDispatchedEmails || []).find(e => e.id === emailId);
+        if (!found) return;
+
+        const frame = document.getElementById('email-preview-frame');
+        if (frame) {
+            frame.srcdoc = found.htmlContent;
+        }
+        this.switchEmailTab('preview');
+    },
+
+    async sendTestEmail() {
+        const input = document.getElementById('test-email-recipient');
+        const btn = document.getElementById('btn-send-test-email');
+        const result = document.getElementById('test-email-result');
+        const to = input ? input.value.trim() : 'delivered@resend.dev';
+
+        if (!to) {
+            alert('Please enter a recipient email.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Dispatching...';
+        result.style.display = 'none';
+
+        try {
+            const res = await API.sendTestEmail(to, 'Verification Test from CareerPulse & Resend');
+            result.style.display = 'block';
+            result.style.background = 'rgba(16, 185, 129, 0.15)';
+            result.style.color = '#34d399';
+            result.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            result.innerHTML = `✓ Email processed successfully via Resend! Status: <strong>${res.status || 'OK'}</strong> (ID: ${res.resendMessageId || 'sim'})`;
+            await this.refreshEmailAudits();
+        } catch (e) {
+            result.style.display = 'block';
+            result.style.background = 'rgba(239, 68, 68, 0.15)';
+            result.style.color = '#f87171';
+            result.innerHTML = `Error dispatching test email: ${e.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Send Test Notification';
+        }
+    },
+
+    async enrollInActiveCourse() {
+        if (!this.activeCourse) return;
+        await this.enrollCourseDirect(this.activeCourse.id);
+    },
+
+    async enrollCourseDirect(courseId) {
+        try {
+            const res = await API.enrollCourse(courseId, this.currentUserId);
+            this.activeEnrollment = res;
+            alert(`✉️ Successfully enrolled in course! Welcome email dispatched via Resend.`);
+            await this.loadCatalog();
+            await this.openPlan(courseId);
+            this.refreshEmailAudits();
+        } catch (e) {
+            console.error('Enrollment failed:', e);
+            alert('Could not complete enrollment. Please try again.');
+        }
     },
 
     // =========================================================================
