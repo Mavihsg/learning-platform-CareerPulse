@@ -1182,8 +1182,13 @@ const App = {
 
         if (isVideo) {
             let embedUrl = foundLesson.videoUrl;
-            if (!embedUrl.includes('enablejsapi=1')) {
-                embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'enablejsapi=1&origin=' + encodeURIComponent(window.location.origin);
+            let ytId = null;
+            const ytMatch = embedUrl.match(/(?:embed\/|v=|vi\/|youtu\.be\/|\/v\/)([a-zA-Z0-9_-]{11})/);
+            if (ytMatch) {
+                ytId = ytMatch[1];
+                embedUrl = `https://www.youtube-nocookie.com/embed/${ytId}?enablejsapi=1&rel=0`;
+            } else if (!embedUrl.includes('enablejsapi=1')) {
+                embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'enablejsapi=1';
             }
             videoIframe.src = embedUrl;
             videoContainer.style.display = 'block';
@@ -1192,8 +1197,13 @@ const App = {
                 videoMeta.style.display = 'block';
                 const metaTitle = document.getElementById('video-meta-title');
                 const metaDesc = document.getElementById('video-meta-desc');
+                const directBtn = document.getElementById('btn-video-direct-watch');
                 if (metaTitle) metaTitle.innerHTML = `<span>🎬</span> ${this.escapeHtml(foundLesson.title)} (${foundLesson.durationMinutes} min)`;
                 if (metaDesc) metaDesc.textContent = foundLesson.summary || 'Watch at least 80% of this video lesson to fulfill the requirement and earn your XP reward.';
+                if (directBtn) {
+                    directBtn.href = ytId ? `https://www.youtube.com/watch?v=${ytId}` : foundLesson.videoUrl;
+                    directBtn.style.display = 'inline-flex';
+                }
             }
 
             // Hide reading container completely for video components

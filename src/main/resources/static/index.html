@@ -1571,8 +1571,15 @@
 
                 <!-- Video Metadata Card (Shown only for VIDEO lessons instead of long reading text) -->
                 <div class="video-info-card" id="modal-video-meta" style="display: none;">
-                    <h4 id="video-meta-title"><span>🎬</span> Video Overview & Focus Areas</h4>
-                    <p id="video-meta-desc">Watch at least 80% of this educational video to unlock the completion reward and XP points.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                        <div>
+                            <h4 id="video-meta-title" style="margin: 0 0 0.4rem 0;"><span>🎬</span> Video Overview & Focus Areas</h4>
+                            <p id="video-meta-desc" style="margin: 0;">Watch at least 80% of this educational video to unlock the completion reward and XP points.</p>
+                        </div>
+                        <a id="btn-video-direct-watch" href="#" target="_blank" rel="noopener noreferrer" class="btn-video-direct" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 500; padding: 0.4rem 0.85rem; border-radius: 6px; text-decoration: none; border: 1px solid var(--border-color, #334155); background: rgba(255,255,255,0.06); color: var(--text-primary, #f8fafc); white-space: nowrap;">
+                            <span>▶️</span> Watch on YouTube ↗
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Markdown Content Container (Shown for READING / EXERCISE lessons) -->
@@ -1894,8 +1901,8 @@
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js?v=2.2"></script>
-    <script src="js/app.js?v=2.2"></script>
+    <script src="js/api.js?v=2.3"></script>
+    <script src="js/app.js?v=2.3"></script>
 </body>
 
 </html>

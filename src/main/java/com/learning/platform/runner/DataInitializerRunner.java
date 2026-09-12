@@ -17,7 +17,10 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class DataInitializerRunner implements ApplicationRunner {
@@ -86,8 +89,9 @@ public class DataInitializerRunner implements ApplicationRunner {
         }
 
         if (courseRepository.count() > 0) {
-            log.info("Database already initialized with courses ({}) and skills ({}). Skipping initial seed.",
+            log.info("Database already initialized with courses ({}) and skills ({}). Syncing lesson materials...",
                     courseRepository.count(), skillRepository.count());
+            syncLessonMaterials();
             this.initialized = true;
             return;
         }
@@ -235,6 +239,65 @@ public class DataInitializerRunner implements ApplicationRunner {
                 courseRepository.saveAll(courses);
                 log.info("Seeded {} courses with modules, lessons & quizzes into H2 in-memory store.", courses.size());
             }
+        }
+    }
+
+    private void syncLessonMaterials() {
+        try {
+            Resource resource = resourceLoader.getResource("classpath:data/courses.json");
+            if (!resource.exists()) return;
+            List<Course> seededCourses;
+            try (InputStream is = resource.getInputStream()) {
+                seededCourses = objectMapper.readValue(is, new TypeReference<List<Course>>() {});
+            }
+            Map<String, Course> currentCourses = courseRepository.findAll().stream()
+                    .collect(Collectors.toMap(Course::getId, c -> c));
+
+            boolean anyChanged = false;
+            for (Course seeded : seededCourses) {
+                Course existing = currentCourses.get(seeded.getId());
+                if (existing != null && existing.getModules() != null && seeded.getModules() != null) {
+                    Map<String, Lesson> existingLessons = new HashMap<>();
+                    for (CourseModule mod : existing.getModules()) {
+                        if (mod.getLessons() != null) {
+                            for (Lesson l : mod.getLessons()) {
+                                existingLessons.put(l.getId(), l);
+                            }
+                        }
+                    }
+                    boolean courseChanged = false;
+                    for (CourseModule seededMod : seeded.getModules()) {
+                        if (seededMod.getLessons() != null) {
+                            for (Lesson seededLesson : seededMod.getLessons()) {
+                                Lesson existingLesson = existingLessons.get(seededLesson.getId());
+                                if (existingLesson != null) {
+                                    if (seededLesson.getVideoUrl() != null && !seededLesson.getVideoUrl().equals(existingLesson.getVideoUrl())) {
+                                        existingLesson.setVideoUrl(seededLesson.getVideoUrl());
+                                        courseChanged = true;
+                                    }
+                                    if (seededLesson.getContent() != null && !seededLesson.getContent().equals(existingLesson.getContent())) {
+                                        existingLesson.setContent(seededLesson.getContent());
+                                        courseChanged = true;
+                                    }
+                                    if (seededLesson.getSummary() != null && !seededLesson.getSummary().equals(existingLesson.getSummary())) {
+                                        existingLesson.setSummary(seededLesson.getSummary());
+                                        courseChanged = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (courseChanged) {
+                        courseRepository.save(existing);
+                        anyChanged = true;
+                    }
+                }
+            }
+            if (anyChanged) {
+                log.info("Successfully synced lesson video URLs and materials from courses.json into database.");
+            }
+        } catch (Exception e) {
+            log.warn("Notice during syncLessonMaterials: {}", e.getMessage());
         }
     }
 
