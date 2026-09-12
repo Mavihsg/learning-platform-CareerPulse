@@ -34,13 +34,29 @@ public class NotificationController {
 
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getStatus() {
-        boolean isLive = apiKey != null && !apiKey.trim().isBlank();
-        return ResponseEntity.ok(ApiResponse.ok(Map.of(
-                "provider", "Resend (https://resend.com)",
-                "liveMode", isLive,
-                "fromEmail", fromEmail,
-                "status", isLive ? "LIVE_READY" : "SIMULATION_AUDIT_MODE"
-        )));
+        boolean isLive = resendEmailService.isLiveMode();
+        Map<String, Object> data = new java.util.HashMap<>();
+        data.put("provider", "Resend (https://resend.com)");
+        data.put("liveMode", isLive);
+        data.put("fromEmail", fromEmail);
+        data.put("status", isLive ? "LIVE_READY" : "SIMULATION_AUDIT_MODE");
+        data.put("maskedApiKey", resendEmailService.getMaskedApiKey());
+        return ResponseEntity.ok(ApiResponse.ok(data));
+    }
+
+    @PostMapping("/configure-key")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> configureApiKey(@RequestBody Map<String, String> payload) {
+        String key = payload != null ? payload.get("apiKey") : null;
+        resendEmailService.setApiKey(key);
+        boolean isLive = resendEmailService.isLiveMode();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("liveMode", isLive);
+        result.put("status", isLive ? "LIVE_READY" : "SIMULATION_AUDIT_MODE");
+        result.put("maskedApiKey", resendEmailService.getMaskedApiKey());
+        String msg = isLive 
+                ? "Resend API key connected successfully! Live email delivery to inboxes is now active."
+                : "Switched to Simulation & Audit Mode.";
+        return ResponseEntity.ok(ApiResponse.ok(msg, result));
     }
 
     @PostMapping("/send-test")
@@ -65,6 +81,15 @@ public class NotificationController {
                 """;
 
         EmailNotificationAudit audit = resendEmailService.sendCustomEmail(to, subject, testHtml, "TEST").join();
-        return ResponseEntity.ok(ApiResponse.ok("Test email processed", audit));
+        boolean isLive = resendEmailService.isLiveMode();
+        String message;
+        if (!isLive) {
+            message = "Processed in Simulation Mode. (To receive emails directly in your inbox, enter your Resend API key in the connection box above)";
+        } else if (audit.getStatus() != null && audit.getStatus().startsWith("FAILED")) {
+            message = "Resend API Error: " + audit.getStatus();
+        } else {
+            message = "Live email successfully dispatched via Resend to " + audit.getRecipient();
+        }
+        return ResponseEntity.ok(ApiResponse.ok(message, audit));
     }
 }

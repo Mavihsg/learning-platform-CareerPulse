@@ -325,6 +325,14 @@ const API = {
 
     async getNotificationStatus() {
         return this.get('/notifications/status');
+    },
+
+    async configureResendApiKey(apiKey) {
+        return this.post('/notifications/configure-key', { apiKey });
+    },
+
+    async logActiveStudyTime(userId = 'user_1', minutes = 1) {
+        return this.post(`/courses/study-time/log?userId=${encodeURIComponent(userId)}&minutes=${minutes}`);
     }
 };
 

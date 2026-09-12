@@ -133,4 +133,14 @@ public class CourseController {
         com.learning.platform.dto.EmailNotificationAudit audit = courseService.sendCourseCertificate(userId, courseId);
         return ResponseEntity.ok(ApiResponse.ok("Certificate of completion successfully sent to " + audit.getRecipient(), audit));
     }
+
+    @PostMapping("/study-time/log")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> logActiveStudyTime(
+            @RequestParam(defaultValue = "user_1") String userId,
+            @RequestParam int minutes) {
+        if (minutes > 0) {
+            courseService.logRealStudyMinutes(userId, minutes);
+        }
+        return ResponseEntity.ok(ApiResponse.ok("Real study time logged successfully", java.util.Map.of("userId", userId, "minutesLogged", minutes)));
+    }
 }

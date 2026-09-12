@@ -1271,28 +1271,35 @@ const App = {
         }
 
         if (icon) icon.textContent = '▶️';
-        if (label) label.textContent = 'Video Activity: Watch ≥ 80% to complete';
+        if (label) label.textContent = 'Video Activity: Watch ≥ 80% to auto-complete';
         if (badge) {
-            badge.textContent = '🔒 Locked';
+            badge.textContent = '🔒 In Progress';
             badge.style.background = 'rgba(239, 68, 68, 0.15)';
             badge.style.color = '#f87171';
             badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
         }
         if (fill) fill.style.width = '0%';
-        if (metric) metric.textContent = 'Progress: 0% / 80% required';
+        if (metric) metric.textContent = 'Watch Progress: 0% / 80% required';
 
-        let simulatedWatchPct = 0;
+        this._videoSessionSeconds = 0;
+        this._autoCompleted = false;
+
+        // Progressive tracking: calculates real elapsed time in session
+        let simulatedSeconds = 0;
         this._videoPollInterval = setInterval(() => {
-            if (this.activityRequirementMet) return;
-            simulatedWatchPct += 10;
-            if (simulatedWatchPct > 100) simulatedWatchPct = 100;
-            if (fill) fill.style.width = `${simulatedWatchPct}%`;
-            if (metric) metric.textContent = `Progress: ${simulatedWatchPct}% / 80% required`;
+            if (this.activityRequirementMet && this._autoCompleted) return;
 
-            if (simulatedWatchPct >= 80) {
-                this.markActivityRequirementMet(courseId, lessonId, 'VIDEO', simulatedWatchPct);
+            this._videoSessionSeconds++;
+            simulatedSeconds += 10;
+            const watchPct = Math.min(100, Math.round((simulatedSeconds / 100) * 80));
+
+            if (fill) fill.style.width = `${watchPct}%`;
+            if (metric) metric.textContent = `Watch Progress: ${watchPct}% / 80% required (${this._videoSessionSeconds}s active session)`;
+
+            if (watchPct >= 80 && !this._autoCompleted) {
+                this.markActivityRequirementMet(courseId, lessonId, 'VIDEO', watchPct, this._videoSessionSeconds, true);
             }
-        }, 1500);
+        }, 1200);
     },
 
     setupReadingActivityTracking(courseId, lessonId, isDone) {
@@ -1327,28 +1334,37 @@ const App = {
         if (fill) fill.style.width = '0%';
         if (metric) metric.textContent = 'Scroll Progress: 0% / 85%';
 
-        let readingSeconds = 0;
+        this._readingSessionSeconds = 0;
+        this._autoCompleted = false;
         this._readingTimerInterval = setInterval(() => {
-            readingSeconds++;
+            this._readingSessionSeconds++;
         }, 1000);
 
-        const container = document.getElementById('modal-reading-content');
-        if (container) {
-            container.onscroll = () => {
-                if (this.activityRequirementMet) return;
-                const max = container.scrollHeight - container.clientHeight;
-                const pct = max > 0 ? Math.min(100, Math.round((container.scrollTop / max) * 100)) : 100;
-                if (fill) fill.style.width = `${pct}%`;
-                if (metric) metric.textContent = `Scroll Progress: ${pct}% / 85% (${readingSeconds}s reading)`;
+        // Crucial fix: The scrollbar is on .lesson-modal-body, NOT #modal-reading-content!
+        const modalBody = document.querySelector('.lesson-modal-body');
+        const contentContainer = document.getElementById('modal-reading-content');
 
-                if (pct >= 85 || (pct >= 60 && readingSeconds >= 8)) {
-                    this.markActivityRequirementMet(courseId, lessonId, 'READING', pct, readingSeconds);
-                }
-            };
-        }
+        const onScrollCheck = () => {
+            if (this.activityRequirementMet) return;
+            const target = modalBody || contentContainer;
+            if (!target) return;
+            const maxScroll = target.scrollHeight - target.clientHeight;
+            const pct = maxScroll > 0 ? Math.min(100, Math.round((target.scrollTop / maxScroll) * 100)) : 100;
+
+            if (fill) fill.style.width = `${pct}%`;
+            if (metric) metric.textContent = `Scroll Progress: ${pct}% / 85% (${this._readingSessionSeconds}s reading)`;
+
+            if (pct >= 85 || (pct >= 60 && this._readingSessionSeconds >= 8)) {
+                this.markActivityRequirementMet(courseId, lessonId, 'READING', pct, this._readingSessionSeconds, true);
+            }
+        };
+
+        if (modalBody) modalBody.onscroll = onScrollCheck;
+        if (contentContainer) contentContainer.onscroll = onScrollCheck;
     },
 
-    markActivityRequirementMet(courseId, lessonId, activityType, pct = 100, seconds = 20) {
+    async markActivityRequirementMet(courseId, lessonId, activityType, pct = 100, seconds = 20, autoComplete = true) {
+        if (this.activityRequirementMet && this._autoCompleted) return;
         this.activityRequirementMet = true;
         this.clearActivityTimers();
 
@@ -1360,26 +1376,48 @@ const App = {
 
         if (fill) fill.style.width = '100%';
         if (icon) icon.textContent = '🎉';
-        if (label) label.textContent = 'Activity Requirement Met! Unlocked';
+        if (label) label.textContent = 'Activity Requirement Met! Auto-Completed';
         if (badge) {
-            badge.textContent = '✓ Unlocked';
+            badge.textContent = '✓ Completed';
             badge.style.background = 'rgba(16, 185, 129, 0.15)';
             badge.style.color = '#34d399';
             badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
         }
-        if (metric) metric.textContent = `Completed (${pct}%) · Ready to mark complete`;
+        if (metric) metric.textContent = `Completed (${pct}%) · Lesson Auto-Completed (+XP awarded)`;
 
-        this.updateModalCompleteButton(false);
+        this.updateModalCompleteButton(true);
 
-        // Sync with backend activity endpoint
+        // 1. Sync with backend activity endpoint (records real study time if seconds >= 30)
         API.recordLessonActivity(courseId, lessonId, this.currentUserId, activityType, pct, seconds)
             .catch(err => console.warn('Activity record notice:', err.message));
+
+        // 2. Automatically mark as complete in enrollment if not already done
+        const isDone = this.activeEnrollment && this.activeEnrollment.completedLessonIds && this.activeEnrollment.completedLessonIds.includes(lessonId);
+        if (autoComplete && !isDone && !this._autoCompleted) {
+            this._autoCompleted = true;
+            try {
+                const res = await API.toggleLesson(courseId, lessonId, this.currentUserId);
+                if (res && res.data) {
+                    this.activeEnrollment = res.data;
+                    this.updateEnrollmentProgress(res.data);
+                }
+                const chk = document.getElementById(`chk-les-${lessonId}`);
+                if (chk) chk.checked = true;
+
+                // Fire celebration confetti & toast
+                this.triggerCelebrationConfetti();
+                const lessonTitle = this.activeModalLesson ? this.activeModalLesson.lesson.title : 'Lesson';
+                this.showToast(`🎉 80% Complete! "${lessonTitle}" automatically marked complete (+XP awarded)!`, 'success');
+            } catch (err) {
+                console.warn('Auto-completion notice:', err.message);
+            }
+        }
     },
 
     devFastForwardActivity() {
         if (!this.activeModalLesson) return;
         const { courseId, lessonId, lesson } = this.activeModalLesson;
-        this.markActivityRequirementMet(courseId, lessonId, lesson.resourceType || 'VIDEO', 100, 30);
+        this.markActivityRequirementMet(courseId, lessonId, lesson.resourceType || 'VIDEO', 80, 45, true);
     },
 
     updateModalCompleteButton(isDone) {
@@ -1387,7 +1425,7 @@ const App = {
         if (!completeBtn) return;
 
         if (isDone) {
-            completeBtn.textContent = 'Mark as Incomplete';
+            completeBtn.textContent = '✓ Completed (Auto-marked)';
             completeBtn.disabled = false;
             completeBtn.style.opacity = '1';
             completeBtn.style.cursor = 'pointer';
@@ -1405,6 +1443,14 @@ const App = {
     },
 
     closeLessonModal() {
+        // If the user spent active real time in the session, log the real minutes
+        const activeSeconds = (this._videoSessionSeconds || 0) + (this._readingSessionSeconds || 0);
+        if (activeSeconds >= 30) {
+            const mins = Math.max(1, Math.round(activeSeconds / 60));
+            API.logActiveStudyTime(this.currentUserId, mins).catch(() => {});
+        }
+        this._videoSessionSeconds = 0;
+        this._readingSessionSeconds = 0;
         this.clearActivityTimers();
         const modal = document.getElementById('lesson-player-modal');
         if (modal) modal.style.display = 'none';
@@ -1476,9 +1522,30 @@ const App = {
                 API.getRecentEmails().catch(() => [])
             ]);
 
+            const statusData = status && status.data ? status.data : status;
             const subEl = document.getElementById('email-modal-status-sub');
             if (subEl) {
-                subEl.textContent = `Provider: ${status.provider || 'Resend'} · Status: ${status.liveMode ? '🟢 LIVE DELIVERING' : '🟡 SIMULATION & AUDIT MODE'}`;
+                subEl.textContent = `Provider: ${statusData.provider || 'Resend'} · Status: ${statusData.liveMode ? '🟢 LIVE DELIVERING' : '🟡 SIMULATION & AUDIT MODE'}`;
+            }
+
+            const pill = document.getElementById('resend-live-status-pill');
+            if (pill) {
+                if (statusData.liveMode) {
+                    pill.textContent = '🟢 Live Delivery Active';
+                    pill.style.background = 'rgba(16, 185, 129, 0.15)';
+                    pill.style.color = '#34d399';
+                    pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                } else {
+                    pill.textContent = '🟡 Simulation & Audit Mode';
+                    pill.style.background = 'rgba(245, 158, 11, 0.15)';
+                    pill.style.color = '#fbbf24';
+                    pill.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+                }
+            }
+
+            const keyInput = document.getElementById('resend-api-key-input');
+            if (keyInput && statusData.liveMode && statusData.maskedApiKey && !keyInput.value) {
+                keyInput.placeholder = statusData.maskedApiKey;
             }
 
             const countEl = document.getElementById('email-count-pill');
@@ -1491,6 +1558,41 @@ const App = {
             this.renderEmailAuditList(this.cachedDispatchedEmails);
         } catch (e) {
             console.warn('Could not refresh emails:', e);
+        }
+    },
+
+    async configureResendKey() {
+        const input = document.getElementById('resend-api-key-input');
+        const feedback = document.getElementById('resend-key-status-msg');
+        const btn = document.getElementById('btn-connect-resend-key');
+        const key = input ? input.value.trim() : '';
+
+        if (!key) {
+            alert('Please enter your Resend API Key (starts with re_...).');
+            return;
+        }
+
+        if (btn) btn.textContent = 'Connecting...';
+        try {
+            const res = await API.configureResendApiKey(key);
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = 'rgba(16, 185, 129, 0.15)';
+                feedback.style.color = '#34d399';
+                feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                feedback.textContent = (res && res.message) ? res.message : '✓ Resend API key connected successfully! Live delivery active.';
+            }
+            await this.refreshEmailAudits();
+        } catch (e) {
+            if (feedback) {
+                feedback.style.display = 'block';
+                feedback.style.background = 'rgba(239, 68, 68, 0.15)';
+                feedback.style.color = '#f87171';
+                feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                feedback.textContent = `Error connecting API key: ${e.message}`;
+            }
+        } finally {
+            if (btn) btn.textContent = 'Connect API Key';
         }
     },
 
@@ -1568,17 +1670,51 @@ const App = {
         result.style.display = 'none';
 
         try {
+            const statusRes = await API.getNotificationStatus();
+            const statusData = statusRes && statusRes.data ? statusRes.data : statusRes;
+            const isLive = statusData && statusData.liveMode;
+
             const res = await API.sendTestEmail(to, 'Verification Test from CareerPulse & Resend');
+            const audit = res && res.data ? res.data : res;
             result.style.display = 'block';
-            result.style.background = 'rgba(16, 185, 129, 0.15)';
-            result.style.color = '#34d399';
-            result.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-            result.innerHTML = `✓ Email processed successfully via Resend! Status: <strong>${res.status || 'OK'}</strong> (ID: ${res.resendMessageId || 'sim'})`;
+
+            if (!isLive) {
+                result.style.background = 'rgba(245, 158, 11, 0.12)';
+                result.style.color = '#fbbf24';
+                result.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+                result.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 4px;">🟡 Processed in Simulation & Audit Mode</div>
+                    <div>Email simulated and logged in the <strong>Dispatched</strong> tab (Simulated ID: <code>${audit.resendMessageId || 'sim'}</code>).</div>
+                    <div style="margin-top: 6px; font-size: 0.8rem; color: #fde68a; line-height: 1.45;">
+                        ⚠️ <strong>Why didn't an email arrive in ${this.escapeHtml(to)}?</strong><br>
+                        Currently running without a Resend API Key. To deliver real emails directly to your Gmail inbox, paste your Resend API Key in the <strong>Resend API Key Connection</strong> card above and click <em>Connect API Key</em>!
+                    </div>
+                `;
+            } else if (audit.status && audit.status.startsWith('FAILED')) {
+                result.style.background = 'rgba(239, 68, 68, 0.15)';
+                result.style.color = '#f87171';
+                result.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                result.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 4px;">❌ Resend API Notice: ${this.escapeHtml(audit.status)}</div>
+                    <div style="font-size: 0.8rem; margin-top: 4px; color: #fca5a5; line-height: 1.4;">
+                        Tip: On Resend's free tier with <code>onboarding@resend.dev</code>, Resend only permits sending to the email registered on your Resend account. To send to any other address, verify your domain at <a href="https://resend.com/domains" target="_blank" style="color: #fff; text-decoration: underline;">resend.com/domains ↗</a>.
+                    </div>
+                `;
+            } else {
+                result.style.background = 'rgba(16, 185, 129, 0.15)';
+                result.style.color = '#34d399';
+                result.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                result.innerHTML = `
+                    <div style="font-weight: 600; margin-bottom: 4px;">✓ Live Email Dispatched via Resend!</div>
+                    <div>Message ID: <code>${audit.resendMessageId || 'OK'}</code> sent to <strong>${this.escapeHtml(to)}</strong>. Check your inbox or spam folder!</div>
+                `;
+            }
             await this.refreshEmailAudits();
         } catch (e) {
             result.style.display = 'block';
             result.style.background = 'rgba(239, 68, 68, 0.15)';
             result.style.color = '#f87171';
+            result.style.border = '1px solid rgba(239, 68, 68, 0.3)';
             result.innerHTML = `Error dispatching test email: ${e.message}`;
         } finally {
             btn.disabled = false;

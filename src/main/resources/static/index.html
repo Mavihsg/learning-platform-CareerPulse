@@ -1627,17 +1627,40 @@
                     </div>
                 </div>
                 <div id="email-content-test" style="display: none;">
+                    <!-- Resend API Key Configuration Card -->
+                    <div style="background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 1.1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <h4 style="margin: 0; color: var(--text-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <span>🔑</span> Resend API Key Connection
+                            </h4>
+                            <span id="resend-live-status-pill" style="font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                🟡 Simulation & Audit Mode
+                            </span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0 0 0.8rem 0; line-height: 1.45;">
+                            To send <strong>real emails to external inboxes</strong> (e.g. Gmail), get your free API key at <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" style="color: var(--brand-primary); font-weight: 600;">resend.com/api-keys ↗</a>. Without an API key, all emails are safely recorded in the Dispatched audit tab.
+                        </p>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <input type="password" id="resend-api-key-input" class="form-input" style="flex: 1; min-width: 200px; padding: 0.55rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary); font-family: monospace; font-size: 0.85rem;" placeholder="re_123456789... (Paste your Resend API Key)">
+                            <button type="button" class="btn-primary" id="btn-connect-resend-key" onclick="App.configureResendKey()" style="white-space: nowrap; padding: 0.55rem 1rem; font-size: 0.85rem;">
+                                Connect API Key
+                            </button>
+                        </div>
+                        <div id="resend-key-status-msg" style="display: none; font-size: 0.8rem; margin-top: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 6px;"></div>
+                    </div>
+
+                    <!-- Dispatch Test Notification Form -->
                     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem;">
-                        <h4 style="margin-top:0; color: var(--text-primary); font-size: 1.05rem;">Dispatch Test Notification via Resend</h4>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-                            Test real transactional delivery to any recipient using <a href="https://resend.com" target="_blank" style="color: var(--brand-primary);">Resend REST API</a>.
+                        <h4 style="margin-top:0; color: var(--text-primary); font-size: 1.05rem;">Dispatch Test Notification</h4>
+                        <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1rem; line-height: 1.4;">
+                            Sends a verification template via Resend. <em>Note: On Resend's free tier with default domain <code>onboarding@resend.dev</code>, Resend only allows sending to the email address registered on your Resend account (or <code>delivered@resend.dev</code>).</em>
                         </p>
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-secondary);">Recipient Email Address</label>
-                            <input type="email" id="test-email-recipient" class="form-input" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);" placeholder="e.g. shivam.gupta@enterprise.io or your own email" value="delivered@resend.dev">
+                            <input type="email" id="test-email-recipient" class="form-input" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);" placeholder="e.g. shivamgupta16p80@gmail.com" value="delivered@resend.dev">
                         </div>
                         <button class="btn-primary" id="btn-send-test-email" onclick="App.sendTestEmail()">Send Test Notification</button>
-                        <div id="test-email-result" style="margin-top: 1rem; font-size: 0.85rem; display: none; padding: 0.6rem; border-radius: 6px;"></div>
+                        <div id="test-email-result" style="margin-top: 1rem; font-size: 0.85rem; display: none; padding: 0.75rem; border-radius: 6px; line-height: 1.45;"></div>
                     </div>
                 </div>
             </div>
@@ -1901,8 +1924,8 @@
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js?v=2.3"></script>
-    <script src="js/app.js?v=2.3"></script>
+    <script src="js/api.js?v=2.4"></script>
+    <script src="js/app.js?v=2.4"></script>
 </body>
 
 </html>

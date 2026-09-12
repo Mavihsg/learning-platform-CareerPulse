@@ -24,7 +24,7 @@ public class ResendEmailService {
     private static final Logger log = LoggerFactory.getLogger(ResendEmailService.class);
 
     @Value("${resend.api.key:}")
-    private String apiKey;
+    private volatile String apiKey;
 
     @Value("${resend.from.email:CareerPulse <onboarding@resend.dev>}")
     private String fromEmail;
@@ -43,6 +43,25 @@ public class ResendEmailService {
     public ResendEmailService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.restClient = RestClient.builder().build();
+    }
+
+    public void setApiKey(String key) {
+        this.apiKey = key != null ? key.trim() : null;
+        log.info("Resend API key updated. Live mode: {}", isLiveMode());
+    }
+
+    public String getApiKey() {
+        return this.apiKey;
+    }
+
+    public boolean isLiveMode() {
+        return this.apiKey != null && !this.apiKey.trim().isBlank();
+    }
+
+    public String getMaskedApiKey() {
+        if (!isLiveMode()) return "";
+        if (apiKey.length() <= 7) return "re_***";
+        return apiKey.substring(0, 5) + "••••••••" + apiKey.substring(apiKey.length() - 3);
     }
 
     /**
@@ -126,10 +145,24 @@ public class ResendEmailService {
                     recordAudit(audit);
                     return audit;
 
+                } catch (org.springframework.web.client.RestClientResponseException e) {
+                    String errBody = e.getResponseBodyAsString();
+                    log.warn("Resend API HTTP {} error: {}", e.getStatusCode(), errBody);
+                    String errMsg = errBody;
+                    try {
+                        JsonNode j = objectMapper.readTree(errBody);
+                        if (j.has("message")) {
+                            errMsg = j.get("message").asText();
+                        }
+                    } catch (Exception ignored) {}
+                    String errId = "err_" + UUID.randomUUID().toString().substring(0, 8);
+                    EmailNotificationAudit failed = new EmailNotificationAudit(auditId, recipient, type, subject, htmlContent, now, "FAILED (" + errMsg + ")", errId);
+                    recordAudit(failed);
+                    return failed;
                 } catch (Exception e) {
-                    log.warn("Resend API dispatch error: {}. Falling back to simulation audit mode.", e.getMessage());
-                    String simId = "sim_" + UUID.randomUUID().toString().substring(0, 8);
-                    EmailNotificationAudit fallback = new EmailNotificationAudit(auditId, recipient, type, subject, htmlContent, now, "FALLBACK_LOGGED (" + e.getMessage() + ")", simId);
+                    log.warn("Resend API dispatch error: {}", e.getMessage());
+                    String errId = "err_" + UUID.randomUUID().toString().substring(0, 8);
+                    EmailNotificationAudit fallback = new EmailNotificationAudit(auditId, recipient, type, subject, htmlContent, now, "FAILED (" + e.getMessage() + ")", errId);
                     recordAudit(fallback);
                     return fallback;
                 }

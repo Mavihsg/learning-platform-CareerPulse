@@ -305,18 +305,6 @@ public class CourseService {
             if (totalMins > 0) totalHours = totalMins / 60.0;
         }
 
-        // Asynchronous study logging: eliminates 2 sequential remote DB roundtrips from HTTP response
-        if (isCompleting && toggledLessonMinutes > 0) {
-            final int mins = toggledLessonMinutes;
-            CompletableFuture.runAsync(() -> {
-                try {
-                    logStudyMinutes(userId, mins);
-                } catch (Exception e) {
-                    log.warn("Async logStudyMinutes error: {}", e.getMessage());
-                }
-            });
-        }
-
         enrollment.setTotalLessons(total);
         int pct = total > 0 ? (int) Math.round(((double) completedCount / total) * 100) : 0;
         enrollment.setProgressPercentage(pct);
@@ -466,6 +454,18 @@ public class CourseService {
             }
         }
 
+        // Log real time spent on learning session (only actual elapsed time, never artificial course time)
+        if (timeSpentSeconds >= 30) {
+            int actualMins = Math.max(1, (int) Math.round(timeSpentSeconds / 60.0));
+            CompletableFuture.runAsync(() -> {
+                try {
+                    logStudyMinutes(userId, actualMins);
+                } catch (Exception e) {
+                    log.warn("Async logStudyMinutes error: {}", e.getMessage());
+                }
+            });
+        }
+
         Map<String, Object> res = new HashMap<>();
         res.put("lessonId", lessonId);
         res.put("activityType", activityType);
@@ -475,6 +475,15 @@ public class CourseService {
         res.put("lessonCompleted", alreadyCompleted || toggled);
         res.put("enrollment", enrollment);
         return res;
+    }
+
+    /**
+     * Public method to log real elapsed study minutes for a user.
+     */
+    public void logRealStudyMinutes(String userId, int minutes) {
+        if (minutes > 0) {
+            logStudyMinutes(userId, minutes);
+        }
     }
 
     /**
