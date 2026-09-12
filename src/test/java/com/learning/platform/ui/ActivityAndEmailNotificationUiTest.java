@@ -38,10 +38,10 @@ class ActivityAndEmailNotificationUiTest extends BasePlaywrightUiTest {
         Locator activityBar = page.locator("#lesson-activity-tracker");
         assertTrue(activityBar.isVisible(), "Activity tracker bar should be visible inside lesson modal");
 
-        // Verify rich markdown curriculum content is rendered
-        String readingContent = page.locator("#modal-reading-content").innerText();
-        assertTrue(readingContent.contains("Dimensional Data Modeling") || readingContent.contains("Star"),
-                "Lesson reading container should render rich markdown content");
+        // Verify video container is visible and reading content is hidden for VIDEO component
+        assertTrue(page.locator("#modal-video-container").isVisible(), "Video container should be visible for VIDEO component");
+        assertFalse(page.locator("#modal-reading-content").isVisible(), "Reading container should be hidden for VIDEO component");
+        assertTrue(page.locator("#modal-video-meta").isVisible(), "Video metadata card should be visible for VIDEO component");
 
         // Click Dev Fast-Forward to simulate fulfilling the 80% watch activity requirement
         page.locator("#btn-dev-fastforward").click();

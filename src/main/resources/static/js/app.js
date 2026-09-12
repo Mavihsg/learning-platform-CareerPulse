@@ -881,9 +881,14 @@ const App = {
                 cardExtraClass = ' is-completed';
                 statusPillHtml = `<span class="badge-status-completed">✓ COMPLETED</span>`;
                 btnHtml = `
-                    <button class="btn-primary btn-completed-plan btn-full-width" onclick="App.openPlan('${c.id}')">
-                        ✓ Completed · Review Plan
-                    </button>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-primary btn-completed-plan" style="flex: 1;" onclick="App.openPlan('${c.id}')">
+                            ✓ Completed · Review
+                        </button>
+                        <button class="btn-secondary" style="padding: 0.5rem 0.75rem; white-space: nowrap;" title="Send Certificate to your email" onclick="App.sendCourseCertificate('${c.id}')">
+                            🎓 Certificate
+                        </button>
+                    </div>
                 `;
             } else if (isInProgress) {
                 statusPillHtml = `<span class="badge-status-inprogress">${progressPct}% IN PROGRESS</span>`;
@@ -893,7 +898,7 @@ const App = {
                     </button>
                 `;
             } else {
-                statusPillHtml = `<span class="badge-status-on-track" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">NOT ENROLLED</span>`;
+                statusPillHtml = `<span class="badge-status-not-enrolled">NOT ENROLLED</span>`;
                 btnHtml = `
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="btn-primary" style="flex: 1;" onclick="App.enrollCourseDirect('${c.id}')">
@@ -910,12 +915,12 @@ const App = {
             card.className = `card catalog-card${cardExtraClass}`;
             card.innerHTML = `
                 <div>
-                    <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <span class="tag-plan-category">${this.escapeHtml(c.category || 'Engineering')}</span>
+                    <div class="card-header-row" style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                        <span class="tag-plan-category" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${this.escapeHtml(c.category || 'Engineering')}</span>
+                        <div class="card-header-badges" style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; white-space: nowrap;">
                             ${statusPillHtml}
+                            <span class="badge-pct-pill">${this.escapeHtml(c.difficultyLevel || 'INTERMEDIATE')}</span>
                         </div>
-                        <span class="badge-pct-pill">${this.escapeHtml(c.difficultyLevel || 'INTERMEDIATE')}</span>
                     </div>
                     <h3 class="core-course-title" style="font-size: 1.15rem; margin-top: 0.6rem;">${this.escapeHtml(c.title)}</h3>
                     <p class="core-course-sub" style="margin-bottom: 1rem;">${this.escapeHtml(c.description)}</p>
@@ -936,6 +941,20 @@ const App = {
     openPlan(courseId) {
         this.currentPlanId = courseId;
         this.navigate('plan');
+    },
+
+    async sendCourseCertificate(courseId) {
+        try {
+            const user = this.currentUser;
+            const targetUser = (user && user.email) ? user.email : 'user email';
+            await API.post(`/courses/${courseId}/certificate/send?userId=${encodeURIComponent(this.currentUserId || 'user_1')}`);
+            alert(`🎓 Course Completion Certificate sent to ${targetUser} via Resend!`);
+            await this.refreshEmailAudits();
+            this.openEmailModal();
+        } catch (e) {
+            console.error('Failed to send certificate:', e);
+            alert(`Could not send certificate: ${e.message}`);
+        }
     },
 
     // =========================================================================
@@ -994,6 +1013,15 @@ const App = {
         document.getElementById('plan-summary-done').textContent = completedCount;
         document.getElementById('plan-summary-time').textContent = `${remainingHours} h`;
         document.getElementById('plan-summary-date').textContent = enrollment ? (enrollment.targetDate || '12 Nov 2026') : '12 Nov 2026';
+
+        const certBtn = document.getElementById('btn-plan-certificate');
+        const contBtn = document.getElementById('btn-plan-continue');
+        if (certBtn) {
+            certBtn.style.display = (pct >= 100) ? 'block' : 'none';
+        }
+        if (contBtn) {
+            contBtn.textContent = (pct >= 100) ? '✓ Completed · Review Curriculum' : 'Continue where I left off';
+        }
 
         const container = document.getElementById('modules-tree-container');
         if (!container) return;
@@ -1145,9 +1173,11 @@ const App = {
         // Reset and clear any existing activity timers
         this.clearActivityTimers();
 
-        // Handle Video vs Reading
+        // Handle Video vs Reading Component
         const videoContainer = document.getElementById('modal-video-container');
         const videoIframe = document.getElementById('modal-video-iframe');
+        const videoMeta = document.getElementById('modal-video-meta');
+        const readingContainer = document.getElementById('modal-reading-content');
         const isVideo = foundLesson.resourceType === 'VIDEO' && foundLesson.videoUrl;
 
         if (isVideo) {
@@ -1158,17 +1188,35 @@ const App = {
             videoIframe.src = embedUrl;
             videoContainer.style.display = 'block';
 
+            if (videoMeta) {
+                videoMeta.style.display = 'block';
+                const metaTitle = document.getElementById('video-meta-title');
+                const metaDesc = document.getElementById('video-meta-desc');
+                if (metaTitle) metaTitle.innerHTML = `<span>🎬</span> ${this.escapeHtml(foundLesson.title)} (${foundLesson.durationMinutes} min)`;
+                if (metaDesc) metaDesc.textContent = foundLesson.summary || 'Watch at least 80% of this video lesson to fulfill the requirement and earn your XP reward.';
+            }
+
+            // Hide reading container completely for video components
+            if (readingContainer) {
+                readingContainer.style.display = 'none';
+                readingContainer.innerHTML = '';
+            }
+
             this.setupVideoActivityTracking(courseId, lessonId, isDone);
         } else {
             videoIframe.src = '';
             videoContainer.style.display = 'none';
+            if (videoMeta) videoMeta.style.display = 'none';
+
+            // Show reading container for reading / exercise / project components
+            if (readingContainer) {
+                readingContainer.style.display = 'block';
+                const contentText = foundLesson.content || foundLesson.summary || 'Detailed lesson instructions and material are available for this module.';
+                readingContainer.innerHTML = this.renderMarkdown(contentText);
+            }
+
             this.setupReadingActivityTracking(courseId, lessonId, isDone);
         }
-
-        // Handle Formatted Reading Content
-        const readingContainer = document.getElementById('modal-reading-content');
-        const contentText = foundLesson.content || foundLesson.summary || 'Detailed lesson instructions and material are available for this module.';
-        readingContainer.innerHTML = this.renderMarkdown(contentText);
 
         // Update Complete Button UI
         this.updateModalCompleteButton(isDone);
@@ -2098,26 +2146,117 @@ const App = {
     // Helpers
     renderMarkdown(text) {
         if (!text) return '';
-        let escaped = this.escapeHtml(text);
-        // Code blocks (support optional language identifier like ```java)
-        escaped = escaped.replace(/```(?:[a-zA-Z0-9_-]+)?\n?([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-        // Inline code `code`
-        escaped = escaped.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-        // Headings
-        escaped = escaped.replace(/### (.*?)(?:\n|$)/g, '<h3>$1</h3>');
-        escaped = escaped.replace(/#### (.*?)(?:\n|$)/g, '<h4>$1</h4>');
-        escaped = escaped.replace(/## (.*?)(?:\n|$)/g, '<h2>$1</h2>');
-        // Bold
-        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Italics
-        escaped = escaped.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
-        // Lists: both - and *
-        escaped = escaped.replace(/^[-*] (.*?)$/gm, '<li>$1</li>');
-        escaped = escaped.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
-        // Line breaks
-        escaped = escaped.replace(/\n\n/g, '<p></p>');
-        escaped = escaped.replace(/\n/g, '<br>');
-        return escaped;
+
+        // 1. Extract and preserve code blocks
+        const codeBlocks = [];
+        let processed = text.replace(/```(?:([a-zA-Z0-9_-]+)\r?\n)?([\s\S]*?)```/g, (match, lang, code) => {
+            const index = codeBlocks.length;
+            codeBlocks.push({
+                lang: (lang || 'code').toLowerCase(),
+                code: this.escapeHtml(code.trimEnd())
+            });
+            return `@@@CODEBLOCK_${index}@@@`;
+        });
+
+        // 2. Escape HTML for the non-code text
+        processed = this.escapeHtml(processed);
+
+        // 3. Process GitHub-Flavored Markdown Tables
+        processed = processed.replace(/(?:^|\n)(\|[^\n]+\|\r?\n\|[\s\-:|]+\|\r?\n(?:\|[^\n]+\|\r?\n?)+)/g, (match, tableText) => {
+            const lines = tableText.trim().split(/\r?\n/).filter(l => l.trim().startsWith('|'));
+            if (lines.length < 2) return match;
+
+            const parseRow = (row) => {
+                return row.split('|')
+                    .slice(1, -1)
+                    .map(cell => cell.trim());
+            };
+
+            const headerCells = parseRow(lines[0]);
+            const bodyRows = lines.slice(2).map(parseRow);
+
+            let tableHtml = '<div class="reading-table-wrapper"><table><thead><tr>';
+            headerCells.forEach(cell => {
+                let cellFormatted = cell.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                tableHtml += `<th>${cellFormatted}</th>`;
+            });
+            tableHtml += '</tr></thead><tbody>';
+
+            bodyRows.forEach(row => {
+                tableHtml += '<tr>';
+                row.forEach(cell => {
+                    let cellFormatted = cell
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+                        .replace(/`([^`\n]+)`/g, '<code class="inline-code-pill">$1</code>');
+                    tableHtml += `<td>${cellFormatted}</td>`;
+                });
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</tbody></table></div>';
+            return '\n\n' + tableHtml + '\n\n';
+        });
+
+        // 4. Blockquotes
+        processed = processed.replace(/(?:^|\n)((?:&gt;[ ]?.*(?:\r?\n|$))+)/g, (match) => {
+            const quoteLines = match.trim().split(/\r?\n/).map(l => l.replace(/^&gt;[ ]?/, ''));
+            return `<blockquote>${quoteLines.join('<br>')}</blockquote>`;
+        });
+
+        // 5. Headings (ordered from longest #### to shortest # anchored at start of line)
+        processed = processed.replace(/^####[ \t]+(.*?)$/gm, '<h4>$1</h4>');
+        processed = processed.replace(/^###[ \t]+(.*?)$/gm, '<h3>$1</h3>');
+        processed = processed.replace(/^##[ \t]+(.*?)$/gm, '<h2>$1</h2>');
+        processed = processed.replace(/^#[ \t]+(.*?)$/gm, '<h2>$1</h2>');
+
+        // 6. Horizontal rules
+        processed = processed.replace(/^[ \t]*---[ \t]*$/gm, '<hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">');
+
+        // 7. Grouped Ordered Lists (e.g. 1. First Normal Form ...)
+        processed = processed.replace(/(?:^|\n)((?:^\d+\.[ \t]+.*(?:\r?\n|$))+)/gm, (match) => {
+            const items = match.trim().split(/\r?\n/).map(l => l.replace(/^\d+\.[ \t]+/, '').trim());
+            return '<ol>' + items.map(item => `<li>${item}</li>`).join('') + '</ol>';
+        });
+
+        // 8. Grouped Unordered Lists (e.g. * Fact Tables ... or - Fact Tables ...)
+        processed = processed.replace(/(?:^|\n)((?:^[-*][ \t]+.*(?:\r?\n|$))+)/gm, (match) => {
+            const items = match.trim().split(/\r?\n/).map(l => l.replace(/^[-*][ \t]+/, '').trim());
+            return '<ul>' + items.map(item => `<li>${item}</li>`).join('') + '</ul>';
+        });
+
+        // 9. Bold, Italics, Inline Code
+        processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        processed = processed.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+        processed = processed.replace(/`([^`\n]+)`/g, '<code class="inline-code-pill">$1</code>');
+
+        // 10. Paragraphs & Linebreaks
+        const paragraphs = processed.split(/\r?\n\s*\r?\n/);
+        processed = paragraphs.map(p => {
+            const trimmed = p.trim();
+            if (!trimmed) return '';
+            if (trimmed.startsWith('<h') || trimmed.startsWith('<table') || trimmed.startsWith('<div') ||
+                trimmed.startsWith('<blockquote') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol') ||
+                trimmed.startsWith('<hr') || trimmed.startsWith('@@@CODEBLOCK_')) {
+                return trimmed;
+            }
+            return `<p>${trimmed.replace(/\r?\n/g, '<br>')}</p>`;
+        }).join('\n');
+
+        // 11. Restore Code Blocks
+        processed = processed.replace(/@@@CODEBLOCK_(\d+)@@@/g, (match, idx) => {
+            const block = codeBlocks[parseInt(idx, 10)];
+            if (!block) return '';
+            return `
+                <div class="code-snippet-box">
+                    <div class="code-snippet-header">
+                        <span>${block.lang}</span>
+                    </div>
+                    <pre><code>${block.code}</code></pre>
+                </div>
+            `;
+        });
+
+        return processed;
     },
 
     escapeHtml(str) {

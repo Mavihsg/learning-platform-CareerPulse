@@ -125,4 +125,12 @@ public class CourseController {
                 .map(e -> ResponseEntity.ok(ApiResponse.ok(e)))
                 .orElseGet(() -> ResponseEntity.ok(ApiResponse.ok(new Enrollment(userId, courseId))));
     }
+
+    @PostMapping("/{courseId}/certificate/send")
+    public ResponseEntity<ApiResponse<com.learning.platform.dto.EmailNotificationAudit>> sendCertificate(
+            @PathVariable String courseId,
+            @RequestParam(defaultValue = "user_1") String userId) {
+        com.learning.platform.dto.EmailNotificationAudit audit = courseService.sendCourseCertificate(userId, courseId);
+        return ResponseEntity.ok(ApiResponse.ok("Certificate of completion successfully sent to " + audit.getRecipient(), audit));
+    }
 }

@@ -718,8 +718,11 @@
                                     <strong id="plan-summary-date">12 Nov 2026</strong>
                                 </div>
 
-                                <button class="btn-primary btn-full-width" onclick="App.resumeFirstIncompleteLesson()">
+                                <button class="btn-primary btn-full-width" id="btn-plan-continue" onclick="App.resumeFirstIncompleteLesson()">
                                     Continue where I left off
+                                </button>
+                                <button class="btn-secondary btn-full-width" id="btn-plan-certificate" style="display: none; margin-top: 0.5rem;" onclick="App.sendCourseCertificate(App.currentPlanId)">
+                                    🎓 Send Certificate to Email
                                 </button>
                             </div>
 
@@ -1566,7 +1569,13 @@
                         allowfullscreen></iframe>
                 </div>
 
-                <!-- Markdown Content Container -->
+                <!-- Video Metadata Card (Shown only for VIDEO lessons instead of long reading text) -->
+                <div class="video-info-card" id="modal-video-meta" style="display: none;">
+                    <h4 id="video-meta-title"><span>🎬</span> Video Overview & Focus Areas</h4>
+                    <p id="video-meta-desc">Watch at least 80% of this educational video to unlock the completion reward and XP points.</p>
+                </div>
+
+                <!-- Markdown Content Container (Shown for READING / EXERCISE lessons) -->
                 <div class="reading-content-container" id="modal-reading-content">
                     <!-- Formatted text injected here -->
                 </div>
@@ -1885,8 +1894,8 @@
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/api.js?v=2.2"></script>
+    <script src="js/app.js?v=2.2"></script>
 </body>
 
 </html>

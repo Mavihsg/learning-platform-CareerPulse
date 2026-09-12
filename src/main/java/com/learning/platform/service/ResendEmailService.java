@@ -56,13 +56,21 @@ public class ResendEmailService {
     }
 
     /**
-     * Send 100% course completion & certification email via Resend
+     * Send 100% course completion & official certification email via Resend
      */
     public CompletableFuture<EmailNotificationAudit> sendCourseCompletionEmail(User user, Course course, Enrollment enrollment) {
+        return sendCourseCertificateEmail(user, course, enrollment);
+    }
+
+    /**
+     * Send official verifiable Course Completion Certificate email to user via Resend
+     */
+    public CompletableFuture<EmailNotificationAudit> sendCourseCertificateEmail(User user, Course course, Enrollment enrollment) {
         String recipient = resolveRecipient(user != null ? user.getEmail() : null);
-        String subject = "🏆 Certificate of Completion: " + (course != null ? course.getTitle() : "Track Completed!");
-        String html = buildCourseCompletionHtml(user, course, enrollment);
-        return sendCustomEmail(recipient, subject, html, "COURSE_COMPLETION");
+        String courseTitle = (course != null && course.getTitle() != null) ? course.getTitle() : "Mastery Curriculum";
+        String subject = "🎓 Official Certificate of Completion: " + courseTitle;
+        String html = buildCourseCertificateHtml(user, course, enrollment);
+        return sendCustomEmail(recipient, subject, html, "CERTIFICATE");
     }
 
     /**
@@ -242,10 +250,17 @@ public class ResendEmailService {
     }
 
     public String buildCourseCompletionHtml(User user, Course course, Enrollment enrollment) {
-        String userName = (user != null && user.getName() != null) ? user.getName() : "Champion";
-        String courseTitle = (course != null && course.getTitle() != null) ? course.getTitle() : "Mastery Curriculum";
+        return buildCourseCertificateHtml(user, course, enrollment);
+    }
+
+    public String buildCourseCertificateHtml(User user, Course course, Enrollment enrollment) {
+        String userName = (user != null && user.getName() != null) ? user.getName() : "Shivam Gupta";
+        String userEmail = (user != null && user.getEmail() != null) ? user.getEmail() : "learner@careerpulse.io";
+        String courseTitle = (course != null && course.getTitle() != null) ? course.getTitle() : "Applied Data Engineering";
+        String track = (course != null && course.getTrack() != null) ? course.getTrack() : "Engineering";
         int xpEarned = (course != null && course.getXpReward() > 0) ? course.getXpReward() : 650;
-        int lessonsCompleted = (enrollment != null && enrollment.getTotalLessons() > 0) ? enrollment.getTotalLessons() : 13;
+        String certId = "CP-CERT-2026-" + Math.abs((courseTitle + userName).hashCode() % 90000 + 10000);
+        String issueDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"));
 
         return """
         <!DOCTYPE html>
@@ -253,55 +268,82 @@ public class ResendEmailService {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Course Completed</title>
+          <title>Certificate of Completion - %s</title>
           <style>
-            body { margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f3f4f6; }
-            .container { max-width: 600px; margin: 40px auto; background: #111827; border: 1px solid #1f2937; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
-            .header { background: linear-gradient(135deg, #10b981 0%%, #059669 50%%, #047857 100%%); padding: 40px 32px; text-align: center; }
-            .header h1 { margin: 0; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; }
-            .badge { display: inline-block; background: rgba(255, 255, 255, 0.25); padding: 4px 14px; border-radius: 9999px; font-size: 13px; font-weight: 800; color: #ffffff; margin-bottom: 12px; }
-            .content { padding: 36px 32px; text-align: center; }
-            .trophy { font-size: 54px; margin-bottom: 16px; }
-            .congrats { font-size: 20px; font-weight: 700; color: #ffffff; margin-bottom: 10px; }
-            .cert-box { background: #1f2937; border: 2px dashed #10b981; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: left; }
-            .cert-title { font-size: 22px; font-weight: 800; color: #34d399; margin-bottom: 8px; }
-            .cert-sub { font-size: 14px; color: #9ca3af; line-height: 1.5; }
-            .stat-badge { display: inline-block; background: #064e3b; border: 1px solid #059669; color: #6ee7b7; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; margin-right: 8px; margin-top: 12px; }
-            .cta-btn { display: inline-block; background: #10b981; color: #ffffff !important; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; margin-top: 12px; }
-            .footer { padding: 24px 32px; background: #0b0f19; border-top: 1px solid #1f2937; text-align: center; font-size: 12px; color: #6b7280; }
+            body { margin: 0; padding: 0; background-color: #050811; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc; }
+            .wrapper { max-width: 680px; margin: 30px auto; background: #0c1222; border: 8px double #10b981; border-radius: 18px; padding: 8px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); }
+            .inner-frame { border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 36px 32px; background: radial-gradient(ellipse at top, #131d38 0%%, #0c1222 100%%); text-align: center; }
+            .cert-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-size: 11px; font-weight: 800; letter-spacing: 0.15em; padding: 4px 16px; border-radius: 999px; margin-bottom: 16px; text-transform: uppercase; }
+            .cert-headline { font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: #94a3b8; margin: 0 0 6px 0; font-weight: 600; }
+            .cert-title { font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; margin: 0 0 20px 0; }
+            .cert-sub { font-size: 13px; color: #64748b; font-style: italic; margin-bottom: 8px; }
+            .recipient-name { font-size: 32px; font-weight: 800; color: #38bdf8; margin: 0 0 16px 0; letter-spacing: -0.5px; }
+            .cert-description { font-size: 14px; line-height: 1.6; color: #94a3b8; max-width: 520px; margin: 0 auto 24px auto; }
+            .course-name-box { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 16px 20px; margin: 0 auto 28px auto; max-width: 500px; }
+            .course-name { font-size: 20px; font-weight: 700; color: #34d399; margin: 0 0 4px 0; }
+            .course-track { font-size: 12px; color: #64748b; font-family: monospace; letter-spacing: 0.05em; }
+            .cert-meta-grid { display: table; width: 100%%; max-width: 500px; margin: 0 auto 28px auto; border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b; padding: 14px 0; }
+            .meta-item { display: table-cell; width: 33.33%%; text-align: center; }
+            .meta-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.08em; margin-bottom: 4px; }
+            .meta-val { font-size: 13px; font-weight: 700; color: #f1f5f9; font-family: monospace; }
+            .signatures-row { display: table; width: 100%%; max-width: 520px; margin: 0 auto 24px auto; }
+            .sig-col { display: table-cell; width: 50%%; text-align: center; padding: 0 16px; }
+            .sig-line { border-bottom: 1px solid #334155; margin-bottom: 6px; padding-bottom: 4px; font-family: 'Brush Script MT', cursive, sans-serif; font-size: 20px; color: #cbd5e1; }
+            .sig-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+            .cta-btn { display: inline-block; background: #10b981; color: #ffffff !important; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; margin-top: 6px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); }
+            .footer { padding: 20px 24px; text-align: center; font-size: 11px; color: #475569; }
+            .footer a { color: #10b981; text-decoration: none; }
           </style>
         </head>
         <body>
-          <div class="container">
-            <div class="header">
-              <div class="badge">🏆 CERTIFICATION ACHIEVED</div>
-              <h1>Curriculum 100%% Completed</h1>
-            </div>
-            <div class="content">
-              <div class="trophy">🏅</div>
-              <div class="congrats">Outstanding Execution, %s!</div>
-              <p style="color: #9ca3af; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
-                You've successfully completed every single module, verified reading exercise, and video requirement in <strong>%s</strong>!
-              </p>
-              <div class="cert-box">
-                <div class="cert-title">Verified Skill Certification</div>
-                <div class="cert-sub">Issued to %s for completing %d comprehensive lessons and architectural assessments.</div>
-                <div>
-                  <span class="stat-badge">+%d XP Awarded</span>
-                  <span class="stat-badge">100%% Progress</span>
-                  <span class="stat-badge">Core Verified</span>
+          <div class="wrapper">
+            <div class="inner-frame">
+              <div class="cert-badge">🏅 OFFICIAL VERIFIED CREDENTIAL</div>
+              <div class="cert-headline">CAREERPULSE ACADEMY OF ADVANCED SOFTWARE & DATA</div>
+              <h1 class="cert-title">Certificate of Technical Mastery</h1>
+              <div class="cert-sub">This certifies that</div>
+              <div class="recipient-name">%s</div>
+              <div class="cert-description">
+                has successfully fulfilled all required hands-on modules, verified video instruction checkpoints, and architectural assessments in
+              </div>
+              <div class="course-name-box">
+                <div class="course-name">%s</div>
+                <div class="course-track">TRACK: %s · 100%%%% CURRICULUM MASTERY</div>
+              </div>
+              <div class="cert-meta-grid">
+                <div class="meta-item">
+                  <div class="meta-label">Credential ID</div>
+                  <div class="meta-val">%s</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Issued On</div>
+                  <div class="meta-val">%s</div>
+                </div>
+                <div class="meta-item">
+                  <div class="meta-label">Recognition</div>
+                  <div class="meta-val">+%d XP Awarded</div>
+                </div>
+              </div>
+              <div class="signatures-row">
+                <div class="sig-col">
+                  <div class="sig-line">Dr. Alex Thorne</div>
+                  <div class="sig-title">Head of Curriculum & Engineering</div>
+                </div>
+                <div class="sig-col">
+                  <div class="sig-line">CareerPulse Council</div>
+                  <div class="sig-title">Credential Verification Registry</div>
                 </div>
               </div>
               <a href="http://localhost:8080" class="cta-btn">View My Dashboard & Badges →</a>
             </div>
-            <div class="footer">
-              <p>Powered by <a href="https://resend.com" style="color: #34d399; text-decoration: none;">Resend</a> · CareerPulse Professional Certification</p>
-              <p>© 2026 CareerPulse Inc. All rights reserved.</p>
-            </div>
+          </div>
+          <div class="footer">
+            <p>Dispatched via <a href="https://resend.com">Resend</a> to <strong>%s</strong> · Verifiable credential ID: %s</p>
+            <p>© 2026 CareerPulse Inc. All rights reserved.</p>
           </div>
         </body>
         </html>
-        """.formatted(userName, courseTitle, userName, lessonsCompleted, xpEarned);
+        """.formatted(courseTitle, userName, courseTitle, track, certId, issueDate, xpEarned, userEmail, certId);
     }
 
     public String buildMilestoneHtml(User user, String milestoneType, String milestoneTitle, String milestoneDescription, int xpEarned) {
