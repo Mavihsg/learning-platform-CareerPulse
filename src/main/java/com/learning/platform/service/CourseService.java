@@ -313,6 +313,7 @@ public class CourseService {
         enrollment.setRemainingHours(Math.round(remaining * 10.0) / 10.0);
 
         if (pct >= 100) {
+            boolean wasAlreadyCompleted = (enrollment.getStatus() == Enrollment.Status.COMPLETED);
             enrollment.setStatus(Enrollment.Status.COMPLETED);
             if (enrollment.getCompletedAt() == null) {
                 enrollment.setCompletedAt(LocalDateTime.now());
@@ -320,17 +321,21 @@ public class CourseService {
             if (!enrollment.isXpAwarded()) {
                 int reward = (c != null && c.getXpReward() > 0) ? c.getXpReward() : 200;
                 enrollment.setXpAwarded(true);
+                userService.awardCourseCompletionXp(userId, reward);
+                log.info("Awarded {} course completion XP to user {} for plan {}", reward, userId, courseId);
+            }
+            if (!wasAlreadyCompleted) {
                 final Enrollment completedEnrollment = enrollment;
                 CompletableFuture.runAsync(() -> {
                     try {
-                        userService.awardCourseCompletionXp(userId, reward);
-                        log.info("Awarded {} course completion XP to user {} for plan {}", reward, userId, courseId);
                         User u = userService.getUserById(userId).orElse(null);
                         if (u != null && c != null) {
+                            log.info("🎉 Course {} 100% completed by user {} ({})! Dispatching congratulations email...", 
+                                    courseId, u.getName(), u.getEmail());
                             resendEmailService.sendCourseCompletionEmail(u, c, completedEnrollment);
                         }
                     } catch (Exception e) {
-                        log.warn("Async awardCourseCompletionXp/email error: {}", e.getMessage());
+                        log.warn("Async course completion email error: {}", e.getMessage());
                     }
                 });
             }

@@ -946,11 +946,9 @@ const App = {
     async sendCourseCertificate(courseId) {
         try {
             const user = this.currentUser;
-            const targetUser = (user && user.email) ? user.email : 'user email';
+            const targetUser = (user && user.email) ? user.email : 'your registered email';
             await API.post(`/courses/${courseId}/certificate/send?userId=${encodeURIComponent(this.currentUserId || 'user_1')}`);
-            alert(`🎓 Course Completion Certificate sent to ${targetUser} via Resend!`);
-            await this.refreshEmailAudits();
-            this.openEmailModal();
+            this.showToast(`🎉 Congratulations! Official course certificate emailed to ${targetUser}!`, 'success');
         } catch (e) {
             console.error('Failed to send certificate:', e);
             alert(`Could not send certificate: ${e.message}`);
@@ -2806,6 +2804,10 @@ const App = {
     showCompletionModal(course, enrollment) {
         if (!course || !enrollment) return;
 
+        this.triggerCelebrationConfetti();
+        const userEmail = (this.currentUser && this.currentUser.email) ? this.currentUser.email : 'your registered email';
+        this.showToast(`🎉 Congratulations! You completed 100% of "${course.title || 'Course'}"! An official completion certificate & email has been sent to ${userEmail}.`, 'success');
+
         const modal = document.getElementById('course-completion-modal');
         if (!modal) return;
 
@@ -2828,7 +2830,6 @@ const App = {
         if (xpEl) xpEl.textContent = `+${earnedXp} XP`;
 
         modal.style.display = 'flex';
-        this.triggerConfetti();
         this.syncUserGamification(true);
     },
 

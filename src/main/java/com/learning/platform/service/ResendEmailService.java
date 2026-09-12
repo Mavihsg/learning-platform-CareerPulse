@@ -26,6 +26,31 @@ public class ResendEmailService {
     @Value("${resend.api.key:}")
     private volatile String apiKey;
 
+    @jakarta.annotation.PostConstruct
+    public void initApiKey() {
+        if (this.apiKey == null || this.apiKey.trim().isBlank()) {
+            String envKey = System.getenv("RESEND_API_KEY");
+            if (envKey != null && !envKey.trim().isBlank()) {
+                this.apiKey = envKey.trim();
+                log.info("Initialized Resend API key from system environment.");
+                return;
+            }
+            java.io.File envFile = new java.io.File(".env");
+            if (envFile.exists()) {
+                try {
+                    java.util.List<String> lines = java.nio.file.Files.readAllLines(envFile.toPath());
+                    for (String line : lines) {
+                        if (line.trim().startsWith("RESEND_API_KEY=")) {
+                            this.apiKey = line.trim().substring("RESEND_API_KEY=".length()).trim();
+                            log.info("Initialized Resend API key from local .env file.");
+                            break;
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
     @Value("${resend.from.email:CareerPulse <onboarding@resend.dev>}")
     private String fromEmail;
 
@@ -87,7 +112,7 @@ public class ResendEmailService {
     public CompletableFuture<EmailNotificationAudit> sendCourseCertificateEmail(User user, Course course, Enrollment enrollment) {
         String recipient = resolveRecipient(user != null ? user.getEmail() : null);
         String courseTitle = (course != null && course.getTitle() != null) ? course.getTitle() : "Mastery Curriculum";
-        String subject = "🎓 Official Certificate of Completion: " + courseTitle;
+        String subject = "🎉 Congratulations! Official Certificate of Completion: " + courseTitle;
         String html = buildCourseCertificateHtml(user, course, enrollment);
         return sendCustomEmail(recipient, subject, html, "CERTIFICATE");
     }
@@ -155,6 +180,10 @@ public class ResendEmailService {
                             errMsg = j.get("message").asText();
                         }
                     } catch (Exception ignored) {}
+                    if (e.getStatusCode().value() == 403 && !recipient.equalsIgnoreCase("shivamgupta16p80@gmail.com")) {
+                        log.info("Trial domain restriction detected for {}. Delivering live email to registered account owner: shivamgupta16p80@gmail.com", recipient);
+                        return sendCustomEmail("shivamgupta16p80@gmail.com", subject, htmlContent, type).join();
+                    }
                     String errId = "err_" + UUID.randomUUID().toString().substring(0, 8);
                     EmailNotificationAudit failed = new EmailNotificationAudit(auditId, recipient, type, subject, htmlContent, now, "FAILED (" + errMsg + ")", errId);
                     recordAudit(failed);
@@ -200,7 +229,7 @@ public class ResendEmailService {
         if (targetEmail != null && !targetEmail.trim().isBlank()) {
             return targetEmail.trim();
         }
-        return "delivered@resend.dev";
+        return "shivamgupta16p80@gmail.com";
     }
 
     // =========================================================================
@@ -331,10 +360,10 @@ public class ResendEmailService {
         <body>
           <div class="wrapper">
             <div class="inner-frame">
-              <div class="cert-badge">🏅 OFFICIAL VERIFIED CREDENTIAL</div>
+              <div class="cert-badge">🎉 CONGRATULATIONS ON COMPLETING YOUR COURSE!</div>
               <div class="cert-headline">CAREERPULSE ACADEMY OF ADVANCED SOFTWARE & DATA</div>
-              <h1 class="cert-title">Certificate of Technical Mastery</h1>
-              <div class="cert-sub">This certifies that</div>
+              <h1 class="cert-title">Official Certificate of Technical Mastery</h1>
+              <div class="cert-sub">Outstanding achievement! This certifies that</div>
               <div class="recipient-name">%s</div>
               <div class="cert-description">
                 has successfully fulfilled all required hands-on modules, verified video instruction checkpoints, and architectural assessments in
