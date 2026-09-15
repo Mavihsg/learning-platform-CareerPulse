@@ -55,6 +55,20 @@ function createWindow() {
 
     // Intercept navigation for external links (YouTube, docs, GitHub)
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.includes('accounts.google.com')) {
+            return {
+                action: 'allow',
+                overrideBrowserWindowOptions: {
+                    width: 500,
+                    height: 650,
+                    autoHideMenuBar: true,
+                    webPreferences: {
+                        nodeIntegration: false,
+                        contextIsolation: true
+                    }
+                }
+            };
+        }
         if (isExternalUrl(url)) {
             shell.openExternal(url);
             return { action: 'deny' };

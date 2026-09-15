@@ -303,13 +303,73 @@ const App = {
             ? this.appConfig.googleClientId 
             : '516054535351-f3bdp0ra9g91304bnmavf38p6jttomfk.apps.googleusercontent.com';
 
-        google.accounts.id.initialize({
-            client_id: clientId,
-            callback: this.handleGoogleSignIn.bind(this)
-        });
-        
-        // This triggers the Google One Tap popup
-        google.accounts.id.prompt();
+        // Check if running in desktop Electron shell
+        const isElectron = !!(window.CareerPulseDesktop || (navigator.userAgent && navigator.userAgent.includes('Electron')));
+
+        try {
+            // First attempt: Active OAuth2 Token Client Popup (supported across modern web browsers)
+            if (google.accounts.oauth2) {
+                const tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: 'email profile openid',
+                    callback: async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            try {
+                                const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                                    headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                                }).then(r => r.json());
+
+                                const res = await API.googleAuth(
+                                    userInfo.name || userInfo.email,
+                                    userInfo.email,
+                                    userInfo.picture
+                                );
+                                if (res && res.user) {
+                                    this.currentUser = res.user;
+                                    this.currentUserId = res.user.id;
+                                    localStorage.setItem('career_pulse_auth_user', JSON.stringify(res.user));
+                                    this.hideAuthModal();
+                                    await this.loadInitialData();
+                                }
+                            } catch (err) {
+                                console.error('Token userInfo fetch failed:', err);
+                                alert('Google Sign-In failed: ' + err.message);
+                            }
+                        } else if (tokenResponse && tokenResponse.error) {
+                            console.warn('OAuth2 error:', tokenResponse.error);
+                            if (isElectron) {
+                                alert('Google OAuth is restricted in desktop shells. Please sign in directly using your work email or quick login below.');
+                            }
+                        }
+                    }
+                });
+                tokenClient.requestAccessToken();
+                return;
+            }
+        } catch (e) {
+            console.warn('OAuth2 TokenClient initialization failed, falling back to id.prompt:', e);
+        }
+
+        // Second attempt: Identity Services One Tap prompt
+        try {
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: this.handleGoogleSignIn.bind(this)
+            });
+            
+            google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed()) {
+                    const reason = notification.getNotDisplayedReason();
+                    console.warn('Google One Tap not displayed. Reason:', reason);
+                    if (isElectron) {
+                        alert('Google restricts OAuth in desktop WebViews. Please sign in using the "Sign In to Portal" button with your email or the quick login profile below.');
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Google accounts.id failed:', err);
+            alert('Could not initialize Google Sign-In. Please sign in with your email or quick login below.');
+        }
     },
 
     async handleGoogleSignIn(response) {
