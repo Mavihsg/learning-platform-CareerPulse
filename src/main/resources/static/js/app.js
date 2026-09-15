@@ -995,7 +995,7 @@ const App = {
                 statusPillHtml = `<span class="badge-status-not-enrolled">NOT ENROLLED</span>`;
                 btnHtml = `
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn-primary" style="flex: 1;" onclick="App.enrollCourseDirect('${c.id}')">
+                        <button class="btn-primary" style="flex: 1;" onclick="App.enrollCourseDirect('${c.id}', this)">
                             Enroll in Track 🚀
                         </button>
                         <button class="btn-secondary" style="flex: 1;" onclick="App.openPlan('${c.id}')">
@@ -1819,17 +1819,31 @@ const App = {
         await this.enrollCourseDirect(this.activeCourse.id);
     },
 
-    async enrollCourseDirect(courseId) {
+    async enrollCourseDirect(courseId, btnEl) {
+        if (!courseId) return;
+        const targetBtn = btnEl || (window.event && (window.event.currentTarget || window.event.target));
+        let originalText = 'Enroll in Track 🚀';
+        if (targetBtn && targetBtn.tagName === 'BUTTON') {
+            originalText = targetBtn.innerHTML;
+            targetBtn.disabled = true;
+            targetBtn.innerHTML = 'Enrolling... ⏳';
+        }
+
         try {
-            const res = await API.enrollCourse(courseId, this.currentUserId);
+            const userId = this.currentUserId || (this.currentUser ? this.currentUser.id : 'user_1');
+            const res = await API.enrollCourse(courseId, userId);
             this.activeEnrollment = res;
-            alert(`✉️ Successfully enrolled in course! Welcome email dispatched via Resend.`);
+            this.showToast(`✉️ Successfully enrolled in course! Welcome email dispatched.`, 'success');
             await this.loadCatalog();
             await this.openPlan(courseId);
             this.refreshEmailAudits();
         } catch (e) {
             console.error('Enrollment failed:', e);
-            alert('Could not complete enrollment. Please try again.');
+            this.showToast(`Could not complete enrollment: ${e.message || 'Please try again'}`, 'error');
+            if (targetBtn && targetBtn.tagName === 'BUTTON') {
+                targetBtn.disabled = false;
+                targetBtn.innerHTML = originalText;
+            }
         }
     },
 
