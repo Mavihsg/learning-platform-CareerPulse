@@ -31,11 +31,9 @@ jobs:
         working-directory: desktop
         run: npm install
 
-      - name: Build Windows .exe Installer & Portable
+      - name: Build Windows .exe Installer
         working-directory: desktop
         run: npm run dist:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload .exe as Workflow Artifact
         uses: actions/upload-artifact@v4
@@ -48,15 +46,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: v1.0.0-desktop
+          tag_name: v1.0.0
           name: "CareerPulse Desktop Client v1.0.0 (Windows)"
           body: |
             ## 🖥️ CareerPulse Desktop Client (Windows)
             
             Official desktop client packaging for the **CareerPulse Gamified Learning Platform**.
             
-            ### Included Downloads:
-            - **`CareerPulse-Setup-1.0.0.exe`**: Complete Windows NSIS Installer (creates Start Menu & Desktop shortcuts).
+            ### Downloads:
+            - **`CareerPulse-Setup-1.0.0.exe`**: Official Windows NSIS Installer (creates Start Menu & Desktop shortcuts).
           files: desktop/dist/*.exe
           draft: false
           prerelease: false

@@ -6,10 +6,10 @@
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win",
-    "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist": "electron-builder -p never",
+    "dist:win": "electron-builder --win -p never",
+    "dist:mac": "electron-builder --mac -p never",
+    "dist:linux": "electron-builder --linux -p never"
   },
   "keywords": [
     "careerpulse",

@@ -3,7 +3,8 @@ productName: CareerPulse
 copyright: "Copyright © 2026 CareerPulse Engineering"
 directories:
   output: dist
-  buildResources: assets
+
+publish: null
 
 files:
   - "src/**/*"
@@ -12,7 +13,6 @@ files:
 win:
   target:
     - nsis
-    - portable
   artifactName: "${productName}-Setup-${version}.${ext}"
 
 nsis:
