@@ -19,6 +19,9 @@ public class ConfigController {
     @Value("${app.features.demo-users-enabled:true}")
     private boolean demoUsersEnabled;
 
+    @Value("${google.client.id:516054535351-f3bdp0ra9g91304bnmavf38p6jttomfk.apps.googleusercontent.com}")
+    private String googleClientId;
+
     @Value("${spring.profiles.active:local}")
     private String activeProfile;
 
@@ -26,6 +29,7 @@ public class ConfigController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPublicConfig() {
         Map<String, Object> config = new HashMap<>();
         config.put("demoUsersEnabled", demoUsersEnabled);
+        config.put("googleClientId", googleClientId);
         config.put("activeProfile", activeProfile);
         config.put("environment", "prod".equalsIgnoreCase(activeProfile) ? "production" : "development");
         return ResponseEntity.ok(ApiResponse.ok(config));

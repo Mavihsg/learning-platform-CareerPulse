@@ -299,8 +299,12 @@ const App = {
             return;
         }
         
+        const clientId = (this.appConfig && this.appConfig.googleClientId) 
+            ? this.appConfig.googleClientId 
+            : '516054535351-f3bdp0ra9g91304bnmavf38p6jttomfk.apps.googleusercontent.com';
+
         google.accounts.id.initialize({
-            client_id: '516054535351-f3bdp0ra9g91304bnmavf38p6jttomfk.apps.googleusercontent.com',
+            client_id: clientId,
             callback: this.handleGoogleSignIn.bind(this)
         });
         
