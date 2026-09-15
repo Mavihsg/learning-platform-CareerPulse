@@ -1,0 +1,27 @@
+{
+  "name": "careerpulse-mobile",
+  "version": "1.0.0",
+  "description": "CareerPulse - Enterprise Gamified Learning Native Mobile Container",
+  "author": "CareerPulse Engineering Team",
+  "license": "UNLICENSED",
+  "scripts": {
+    "cap:sync": "cap sync",
+    "cap:android": "cap open android",
+    "cap:ios": "cap open ios",
+    "build:android": "cap copy android && cd android && ./gradlew assembleDebug",
+    "build:ios": "cap copy ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/status-bar": "^6.0.1",
+    "@capacitor/splash-screen": "^6.0.1",
+    "@capacitor/browser": "^6.0.1",
+    "@capacitor/network": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

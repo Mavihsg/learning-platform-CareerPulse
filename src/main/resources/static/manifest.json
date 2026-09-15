@@ -1,0 +1,19 @@
+{
+  "name": "CareerPulse | Enterprise Learning Platform",
+  "short_name": "CareerPulse",
+  "description": "Enterprise continuous learning and career advancement platform with automated skill pathways, dynamic quizzes, and peer discussions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090B10",
+  "theme_color": "#090B10",
+  "categories": ["education", "productivity", "business"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

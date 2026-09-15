@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Career Pulse | Enterprise Learning Platform</title>
     <meta name="description"
         content="Enterprise continuous learning and career advancement platform with automated skill pathways, no-code course authoring, and organizational analytics.">
@@ -20,6 +20,10 @@
 
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+
+    <!-- Progressive Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#090B10">
 
     <!-- App Stylesheets -->
     <link rel="stylesheet" href="css/theme.css">
@@ -167,6 +171,9 @@
         </div>
     </div>
 
+    <!-- Mobile Drawer Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="App.closeMobileSidebar()"></div>
+
     <!-- =========================================================================
          MAIN APPLICATION LAYOUT
          ========================================================================= -->
@@ -309,6 +316,13 @@
             <!-- Top App Header -->
             <header class="app-top-header">
                 <div class="header-left">
+                    <button class="mobile-menu-toggle-btn" id="btn-mobile-menu" onclick="App.toggleMobileSidebar()" aria-label="Toggle navigation drawer" title="Open Navigation Menu">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
                     <span class="header-breadcrumb" id="header-breadcrumb">OVERVIEW</span>
                 </div>
 
@@ -1911,12 +1925,64 @@
         </div>
     </div>
 
+    <!-- =========================================================================
+         MOBILE BOTTOM NAVIGATION DOCK (PHONES & PORTRAIT TABLETS)
+         ========================================================================= -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Mobile Bottom Navigation">
+        <button class="bottom-nav-item active" id="bnav-dashboard" onclick="App.navigate('dashboard')" aria-label="Dashboard">
+            <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="7" height="9" x="3" y="3" rx="1" />
+                <rect width="7" height="5" x="14" y="3" rx="1" />
+                <rect width="7" height="9" x="14" y="12" rx="1" />
+                <rect width="7" height="5" x="3" y="16" rx="1" />
+            </svg>
+            <span class="bnav-label">Home</span>
+        </button>
+        <button class="bottom-nav-item" id="bnav-catalog" onclick="App.navigate('catalog')" aria-label="Catalog">
+            <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                <path d="M6 6h10" />
+                <path d="M6 10h10" />
+            </svg>
+            <span class="bnav-label">Catalog</span>
+        </button>
+        <button class="bottom-nav-item" id="bnav-my-learning" onclick="App.navigate('my-learning')" aria-label="My Learning">
+            <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+            <span class="bnav-label">Learning</span>
+        </button>
+        <button class="bottom-nav-item" id="bnav-quiz-arena" onclick="App.navigate('quiz-arena')" aria-label="Quiz Arena">
+            <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span class="bnav-label">Quiz</span>
+        </button>
+        <button class="bottom-nav-item" id="bnav-profile" onclick="App.navigate('profile')" aria-label="Profile">
+            <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span class="bnav-label">Profile</span>
+        </button>
+    </nav>
+
     <!-- Fullscreen Celebratory Confetti Canvas -->
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js?v=2.5"></script>
-    <script src="js/app.js?v=2.5"></script>
+    <script src="js/api.js?v=2.6"></script>
+    <script src="js/app.js?v=2.6"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+    </script>
 </body>
 
 </html>

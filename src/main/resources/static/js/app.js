@@ -346,10 +346,37 @@ const App = {
         window.location.reload();
     },
 
+    toggleMobileSidebar() {
+        const sidebar = document.querySelector('.app-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (!sidebar) return;
+        const isOpen = sidebar.classList.toggle('mobile-open');
+        if (backdrop) {
+            backdrop.style.display = isOpen ? 'block' : 'none';
+        }
+        document.body.classList.toggle('sidebar-locked', isOpen);
+    },
+
+    closeMobileSidebar() {
+        const sidebar = document.querySelector('.app-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (sidebar) sidebar.classList.remove('mobile-open');
+        if (backdrop) backdrop.style.display = 'none';
+        document.body.classList.remove('sidebar-locked');
+    },
+
     navigate(viewName) {
+        // Automatically close mobile sidebar if open
+        this.closeMobileSidebar();
+
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         const activeNavBtn = document.getElementById(`nav-${viewName}`);
         if (activeNavBtn) activeNavBtn.classList.add('active');
+
+        // Sync mobile bottom navigation bar
+        document.querySelectorAll('.bottom-nav-item').forEach(btn => btn.classList.remove('active'));
+        const activeBNavBtn = document.getElementById(`bnav-${viewName}`);
+        if (activeBNavBtn) activeBNavBtn.classList.add('active');
 
         document.querySelectorAll('.view-panel').forEach(panel => panel.classList.remove('active'));
         const activePanel = document.getElementById(`view-${viewName}`);
@@ -359,6 +386,9 @@ const App = {
         if (breadcrumbEl) {
             breadcrumbEl.textContent = viewName.toUpperCase().replace('-', ' ');
         }
+
+        // Scroll smoothly to top of viewport
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (viewName === 'dashboard') {
             this.loadDashboard();

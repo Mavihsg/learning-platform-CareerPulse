@@ -24,3 +24,6 @@ buildNumber.properties
 
 # Logs
 *.log
+
+# Scratch
+scratch/
