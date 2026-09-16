@@ -1,11 +1,11 @@
 // CareerPulse Lightweight Service Worker for Desktop App Installability & Offline Shell
-const CACHE_NAME = 'careerpulse-v2.9';
+const CACHE_NAME = 'careerpulse-v2.10';
 const ASSETS_TO_CACHE = [
     '/',
-    '/css/theme.css?v=2.9',
-    '/css/app.css?v=2.9',
-    '/js/api.js?v=2.9',
-    '/js/app.js?v=2.9',
+    '/css/theme.css?v=2.10',
+    '/css/app.css?v=2.10',
+    '/js/api.js?v=2.10',
+    '/js/app.js?v=2.10',
     '/manifest.json'
 ];
 

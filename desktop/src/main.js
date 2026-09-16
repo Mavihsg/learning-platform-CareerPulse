@@ -13,6 +13,22 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const DEFAULT_URL = isDev ? 'http://localhost:8080' : 'https://careerpulse-lms.onrender.com';
 const APP_URL = process.env.APP_URL || DEFAULT_URL;
 
+function isExternalUrl(url) {
+    if (!url) return false;
+    try {
+        const parsed = new URL(url);
+        // Local files and in-app routes
+        if (parsed.protocol === 'file:') return false;
+        if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') return false;
+        if (parsed.hostname.includes('careerpulse-lms.onrender.com') || parsed.hostname.includes('careerpulse.app')) {
+            return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1360,
@@ -103,22 +119,6 @@ function createWindow() {
             mainWindow = null;
         }
     });
-}
-
-function isExternalUrl(url) {
-    try {
-        const parsed = new URL(url);
-        const host = parsed.hostname.toLowerCase();
-        return (
-            host.includes('youtube.com') ||
-            host.includes('youtu.be') ||
-            host.includes('github.com') ||
-            host.includes('google.com') ||
-            host.includes('neon.tech')
-        );
-    } catch {
-        return false;
-    }
 }
 
 function buildAppMenu() {

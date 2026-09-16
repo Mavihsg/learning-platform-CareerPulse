@@ -3014,8 +3014,10 @@ const App = {
 
         const linkedinBtn = document.getElementById('btn-completion-linkedin');
         if (linkedinBtn) {
-            const certUrl = `${window.location.origin}/?verify=${encodeURIComponent(credId)}`;
-            linkedinBtn.href = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(course.title || 'Course Completion')}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(credId)}`;
+            const certUrl = this.getPublicVerifyUrl(credId);
+            const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(course.title || 'Course Completion')}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(credId)}`;
+            linkedinBtn.href = linkedinUrl;
+            linkedinBtn.onclick = (e) => this.openExternalUrl(linkedinUrl, e);
         }
 
         const emailCertBtn = document.getElementById('btn-completion-email-cert');
@@ -3037,9 +3039,33 @@ const App = {
         this.syncUserGamification(true);
     },
 
+    getPublicVerifyUrl(credId) {
+        const isLocalOrDesktop = window.location.hostname === 'localhost' ||
+                                 window.location.hostname === '127.0.0.1' ||
+                                 window.isElectronApp ||
+                                 (window.CareerPulseDesktop && window.CareerPulseDesktop.isDesktop);
+        const base = isLocalOrDesktop ? 'https://careerpulse-lms.onrender.com' : window.location.origin;
+        return `${base}/?verify=${encodeURIComponent(credId)}`;
+    },
+
+    openExternalUrl(url, event) {
+        if (event && event.preventDefault) {
+            event.preventDefault();
+        }
+        if (window.CareerPulseDesktop && typeof window.CareerPulseDesktop.openExternal === 'function') {
+            window.CareerPulseDesktop.openExternal(url);
+            return;
+        }
+        if (window.electronAPI && typeof window.electronAPI.openExternal === 'function') {
+            window.electronAPI.openExternal(url);
+            return;
+        }
+        window.open(url, '_blank', 'noopener,noreferrer');
+    },
+
     copyCurrentCredentialUrl() {
         const credId = this.activeCompletionCredentialId || 'CP-CERT-2026-10001';
-        const url = `${window.location.origin}/?verify=${encodeURIComponent(credId)}`;
+        const url = this.getPublicVerifyUrl(credId);
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(url).then(() => {
                 this.showToast(`📋 Verifiable link copied to clipboard!`, 'success');
@@ -3117,8 +3143,10 @@ const App = {
 
             const linkedinShare = document.getElementById('btn-linkedin-share');
             if (linkedinShare) {
-                const certUrl = `${window.location.origin}/?verify=${encodeURIComponent(data.credentialId)}`;
-                linkedinShare.href = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(data.courseTitle)}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(data.credentialId)}`;
+                const certUrl = this.getPublicVerifyUrl(data.credentialId);
+                const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(data.courseTitle)}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(data.credentialId)}`;
+                linkedinShare.href = linkedinUrl;
+                linkedinShare.onclick = (e) => this.openExternalUrl(linkedinUrl, e);
             }
 
             if (loadingState) loadingState.style.display = 'none';
