@@ -79,6 +79,16 @@ const App = {
         await this.loadAppConfig();
         this.checkAuth();
         this.refreshEmailAudits();
+        this.checkCredentialVerificationUrl();
+    },
+
+    checkCredentialVerificationUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const credId = urlParams.get('verify') || urlParams.get('cred') || urlParams.get('credentialId');
+        if (credId) {
+            console.log('Public credential verification requested via URL:', credId);
+            this.openPublicVerification(credId);
+        }
     },
 
     async loadAppConfig() {
@@ -1108,11 +1118,21 @@ const App = {
 
         const certBtn = document.getElementById('btn-plan-certificate');
         const contBtn = document.getElementById('btn-plan-continue');
+        const resumeHeaderBtn = document.getElementById('btn-plan-resume-header');
         if (certBtn) {
             certBtn.style.display = (pct >= 100) ? 'block' : 'none';
         }
         if (contBtn) {
-            contBtn.textContent = (pct >= 100) ? '✓ Completed · Review Curriculum' : 'Continue where I left off';
+            contBtn.textContent = (pct >= 100) ? '✓ Completed · Review Curriculum (🎉 View Celebration)' : 'Continue where I left off';
+            contBtn.onclick = (pct >= 100) 
+                ? () => App.showCompletionModal(this.activeCourse, this.activeEnrollment) 
+                : () => App.resumeFirstIncompleteLesson();
+        }
+        if (resumeHeaderBtn) {
+            resumeHeaderBtn.textContent = (pct >= 100) ? '🏆 Completed' : 'Resume lesson';
+            resumeHeaderBtn.onclick = (pct >= 100)
+                ? () => App.showCompletionModal(this.activeCourse, this.activeEnrollment)
+                : () => App.resumeFirstIncompleteLesson();
         }
 
         const container = document.getElementById('modules-tree-container');
@@ -1212,7 +1232,11 @@ const App = {
                 if (this.activeCourse) {
                     this.renderPlanOverview(this.activeCourse, updatedEnrollment);
                 }
-                if (updatedEnrollment.progressPercentage >= 100 && prevPct < 100) {
+                const isCompleted = updatedEnrollment.status === 'COMPLETED' 
+                    || updatedEnrollment.progressPercentage >= 100 
+                    || (updatedEnrollment.completedLessonIds && updatedEnrollment.completedLessonIds.length >= (updatedEnrollment.totalLessons || 2));
+                if (isCompleted && (prevPct < 100 || !this._lastCelebratedCourse || this._lastCelebratedCourse !== courseId)) {
+                    this._lastCelebratedCourse = courseId;
                     this.showCompletionModal(this.activeCourse, updatedEnrollment);
                 }
             }
@@ -1489,17 +1513,32 @@ const App = {
             this._autoCompleted = true;
             try {
                 const res = await API.toggleLesson(courseId, lessonId, this.currentUserId);
-                if (res && res.data) {
-                    this.activeEnrollment = res.data;
-                    this.updateEnrollmentProgress(res.data);
+                const updatedEn = (res && res.data) ? res.data : res;
+                if (updatedEn) {
+                    this.activeEnrollment = updatedEn;
+                    if (this.activeCourse) {
+                        this.renderPlanOverview(this.activeCourse, updatedEn);
+                    }
                 }
                 const chk = document.getElementById(`chk-les-${lessonId}`);
                 if (chk) chk.checked = true;
 
                 // Fire celebration confetti & toast
-                this.triggerCelebrationConfetti();
+                this.triggerCelebrationConfetti('confetti-canvas');
                 const lessonTitle = this.activeModalLesson ? this.activeModalLesson.lesson.title : 'Lesson';
                 this.showToast(`🎉 80% Complete! "${lessonTitle}" automatically marked complete (+XP awarded)!`, 'success');
+
+                const isCourseDone = updatedEn && (
+                    updatedEn.status === 'COMPLETED' || 
+                    updatedEn.progressPercentage >= 100 || 
+                    (updatedEn.completedLessonIds && updatedEn.completedLessonIds.length >= (updatedEn.totalLessons || 2))
+                );
+                if (isCourseDone) {
+                    setTimeout(() => {
+                        this.closeLessonModal();
+                        this.showCompletionModal(this.activeCourse, updatedEn);
+                    }, 1000);
+                }
             } catch (err) {
                 console.warn('Auto-completion notice:', err.message);
             }
@@ -1573,7 +1612,8 @@ const App = {
                 }
             }
         }
-        alert('All lessons completed in this plan!');
+        // If all lessons in this curriculum are completed, celebrate!
+        this.showCompletionModal(this.activeCourse, this.activeEnrollment);
     },
 
     // =========================================================================
@@ -2800,17 +2840,22 @@ const App = {
             if (isCompleted) {
                 completionBannerHtml = `
                     <div class="mylearning-completion-banner">
-                        <div class="mylearning-completion-banner-left">
+                        <div class="mylearning-completion-banner-left" style="cursor: pointer;" onclick="App.showCompletionModalForCourse('${c.id}')" title="Click to view celebration modal & certification details">
                             <span class="mylearning-completion-icon">🏆</span>
                             <div>
                                 <div class="mylearning-completion-title">Certified Completion (100%)</div>
-                                <div class="mylearning-completion-date">Completed on: <strong>${completionDateFormatted}</strong></div>
+                                <div class="mylearning-completion-date">Completed on: <strong>${completionDateFormatted}</strong> · <span style="text-decoration: underline; color: var(--brand-primary); font-weight: 600;">View Honors 🎉</span></div>
                             </div>
                         </div>
-                        <button class="btn-toggle-lessons" onclick="App.toggleCompletedLessonsDrawer('${c.id}')" id="btn-drawer-${c.id}">
-                            <span>View All Completed Lessons (${completedLessonsList.length})</span>
-                            <span id="chevron-${c.id}">▼</span>
-                        </button>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="btn-secondary btn-sm" onclick="App.showCompletionModalForCourse('${c.id}')" title="View completion celebration pop-up" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;">
+                                🎉 Pop-up
+                            </button>
+                            <button class="btn-toggle-lessons" onclick="App.toggleCompletedLessonsDrawer('${c.id}')" id="btn-drawer-${c.id}">
+                                <span>Lessons (${completedLessonsList.length})</span>
+                                <span id="chevron-${c.id}">▼</span>
+                            </button>
+                        </div>
                     </div>
                 `;
             } else {
@@ -2861,8 +2906,9 @@ const App = {
                             <h2 class="mylearning-title">${this.escapeHtml(c.title)}</h2>
                             <p class="mylearning-desc">${this.escapeHtml(c.description || 'Curriculum plan.')}</p>
                         </div>
-                        <div class="mylearning-card-action">
-                            <button class="btn-primary btn-sm" onclick="App.navigateToPlan('${c.id}')">
+                        <div class="mylearning-card-action" style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
+                            ${isCompleted ? `<button class="btn-secondary btn-sm" onclick="App.showCompletionModalForCourse('${c.id}')" title="View Congratulations Pop-up" style="white-space: nowrap;">🎉 Honors Pop-up</button>` : ''}
+                            <button class="btn-primary btn-sm" onclick="App.navigateToPlan('${c.id}')" style="white-space: nowrap;">
                                 ${isCompleted ? 'Review Plan' : 'Resume Plan →'}
                             </button>
                         </div>
@@ -2907,14 +2953,32 @@ const App = {
     },
 
     // =========================================================================
-    // COURSE COMPLETION CELEBRATION MODAL & CONFETTI ENGINE
-    // =========================================================================
-    showCompletionModal(course, enrollment) {
-        if (!course || !enrollment) return;
+    triggerCelebrationConfetti(targetCanvasId = 'confetti-canvas') {
+        try {
+            this.startConfetti(targetCanvasId);
+        } catch (err) {
+            console.warn('Celebration confetti notice:', err);
+        }
+    },
 
-        this.triggerCelebrationConfetti();
-        const userEmail = (this.currentUser && this.currentUser.email) ? this.currentUser.email : 'your registered email';
-        this.showToast(`🎉 Congratulations! You completed 100% of "${course.title || 'Course'}"! An official completion certificate & email has been sent to ${userEmail}.`, 'success');
+    async showCompletionModalForCourse(courseId) {
+        try {
+            let course = this.courses ? this.courses.find(c => c.id === courseId) : null;
+            if (!course) {
+                course = await API.getCourse(courseId);
+            }
+            const userId = this.currentUserId || 'user_1';
+            const enrollment = await API.getEnrollment(courseId, userId);
+            this.showCompletionModal(course, enrollment);
+        } catch (e) {
+            console.warn('Could not load course completion details:', e);
+        }
+    },
+
+    showCompletionModal(course, enrollment) {
+        if (!course) course = this.activeCourse;
+        if (!enrollment) enrollment = this.activeEnrollment;
+        if (!course) return;
 
         const modal = document.getElementById('course-completion-modal');
         if (!modal) return;
@@ -2928,17 +2992,213 @@ const App = {
         if (titleEl) titleEl.textContent = course.title || 'Course Completed';
         if (learnerEl) learnerEl.textContent = (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Learner';
         
-        const completedDateStr = enrollment.completedAt || new Date().toISOString();
+        const completedDateStr = (enrollment && enrollment.completedAt) ? enrollment.completedAt : new Date().toISOString();
         if (timeEl) timeEl.textContent = this.formatDateTime(completedDateStr);
 
-        const totalLes = enrollment.totalLessons || (course.modules ? course.modules.reduce((acc, m) => acc + (m.lessons ? m.lessons.length : 0), 0) : 10);
-        if (lessonsEl) lessonsEl.textContent = `${totalLes} / ${totalLes}`;
+        const totalLes = (enrollment && enrollment.totalLessons > 0) 
+            ? enrollment.totalLessons 
+            : (course.modules ? course.modules.reduce((acc, m) => acc + (m.lessons ? m.lessons.length : 0), 0) : 2);
+        const doneLes = (enrollment && enrollment.completedLessonIds ? enrollment.completedLessonIds.length : totalLes) || totalLes;
+        if (lessonsEl) lessonsEl.textContent = `${doneLes} / ${totalLes}`;
         
         const earnedXp = (course.xpReward && course.xpReward > 0) ? course.xpReward : (totalLes * 50);
         if (xpEl) xpEl.textContent = `+${earnedXp} XP`;
 
+        // Deterministic or retrieved Credential ID
+        const fallbackNum = Math.abs(((course.id || 'course') + '_' + (this.currentUser ? this.currentUser.id : 'user_1')).split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)) % 90000 + 10000;
+        const credId = (enrollment && enrollment.credentialId) ? enrollment.credentialId : `CP-CERT-2026-${fallbackNum}`;
+        this.activeCompletionCredentialId = credId;
+
+        const credIdEl = document.getElementById('completion-modal-credential-id');
+        if (credIdEl) credIdEl.textContent = credId;
+
+        const linkedinBtn = document.getElementById('btn-completion-linkedin');
+        if (linkedinBtn) {
+            const certUrl = `${window.location.origin}/?verify=${encodeURIComponent(credId)}`;
+            linkedinBtn.href = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(course.title || 'Course Completion')}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(credId)}`;
+        }
+
+        const emailCertBtn = document.getElementById('btn-completion-email-cert');
+        if (emailCertBtn) {
+            emailCertBtn.onclick = () => this.sendCourseCertificate(course.id);
+        }
+
         modal.style.display = 'flex';
+
+        try {
+            this.triggerCelebrationConfetti('confetti-canvas');
+        } catch (e) {
+            console.warn('Confetti launch notice:', e);
+        }
+
+        const userEmail = (this.currentUser && this.currentUser.email) ? this.currentUser.email : 'your registered email';
+        this.showToast(`🎉 Congratulations! You completed 100% of "${course.title || 'Course'}"! An official completion certificate & email has been sent to ${userEmail}.`, 'success');
+
         this.syncUserGamification(true);
+    },
+
+    copyCurrentCredentialUrl() {
+        const credId = this.activeCompletionCredentialId || 'CP-CERT-2026-10001';
+        const url = `${window.location.origin}/?verify=${encodeURIComponent(credId)}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                this.showToast(`📋 Verifiable link copied to clipboard!`, 'success');
+            }).catch(() => {
+                prompt('Copy certificate verification link:', url);
+            });
+        } else {
+            prompt('Copy certificate verification link:', url);
+        }
+    },
+
+    viewCurrentCredentialVerification() {
+        if (this.activeCompletionCredentialId) {
+            this.openPublicVerification(this.activeCompletionCredentialId);
+        }
+    },
+
+    async openPublicVerification(credentialId) {
+        if (!credentialId) return;
+        const modal = document.getElementById('credential-verification-modal');
+        if (!modal) return;
+
+        const loadingState = document.getElementById('verification-loading-state');
+        const errorState = document.getElementById('verification-error-state');
+        const successState = document.getElementById('verification-success-state');
+
+        modal.style.display = 'flex';
+        if (loadingState) loadingState.style.display = 'block';
+        if (errorState) errorState.style.display = 'none';
+        if (successState) successState.style.display = 'none';
+
+        try {
+            const data = await API.verifyCredential(credentialId);
+            if (!data || !data.valid) {
+                throw new Error('Credential not valid or record not found');
+            }
+
+            this.currentVerifiedCredentialId = data.credentialId || credentialId;
+
+            // Populate success UI
+            const nameEl = document.getElementById('verify-learner-name');
+            const emailEl = document.getElementById('verify-learner-email');
+            const avatarEl = document.getElementById('verify-learner-avatar');
+            const courseTitleEl = document.getElementById('verify-course-title');
+            const courseDescEl = document.getElementById('verify-course-desc');
+            const trackEl = document.getElementById('verify-track-category');
+            const issuedDateEl = document.getElementById('verify-issued-date');
+            const diffEl = document.getElementById('verify-difficulty-lessons');
+            const credIdEl = document.getElementById('verify-credential-id');
+            const issuerEl = document.getElementById('verify-issuer-name');
+            const skillsContainer = document.getElementById('verify-skills-container');
+
+            if (nameEl) nameEl.textContent = data.learnerName || 'Verified Learner';
+            if (emailEl) emailEl.textContent = data.learnerEmailMasked || '***@enterprise.io';
+            if (avatarEl && data.learnerAvatar) avatarEl.src = data.learnerAvatar;
+            if (courseTitleEl) courseTitleEl.textContent = data.courseTitle || 'Curriculum Milestone';
+            if (courseDescEl) courseDescEl.textContent = data.courseDescription || 'Demonstrated mastery across core competency lessons, practical exercises, and assessments.';
+            if (trackEl) trackEl.textContent = `${data.track || 'General'} · ${data.category || 'Engineering'}`;
+            if (issuedDateEl) issuedDateEl.textContent = data.issuedAtFormatted || 'September 2026';
+            if (diffEl) diffEl.textContent = `${data.difficultyLevel || 'INTERMEDIATE'} (${data.totalLessons || 0} Lessons · +${data.xpAwarded || 0} XP)`;
+            if (credIdEl) credIdEl.textContent = data.credentialId;
+            if (issuerEl) issuerEl.textContent = data.issuer || 'CareerPulse Enterprise LMS';
+
+            if (skillsContainer) {
+                skillsContainer.innerHTML = '';
+                const skills = data.skills || ['System Architecture', 'Core Competencies', 'Industry Best Practices'];
+                skills.forEach(skill => {
+                    const pill = document.createElement('span');
+                    pill.className = 'quiz-nav-chip';
+                    pill.style.cssText = 'background: rgba(59, 130, 246, 0.12); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.78rem; font-weight: 600; padding: 0.25rem 0.6rem;';
+                    pill.textContent = skill;
+                    skillsContainer.appendChild(pill);
+                });
+            }
+
+            const linkedinShare = document.getElementById('btn-linkedin-share');
+            if (linkedinShare) {
+                const certUrl = `${window.location.origin}/?verify=${encodeURIComponent(data.credentialId)}`;
+                linkedinShare.href = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(data.courseTitle)}&organizationName=CareerPulse&issueYear=2026&issueMonth=9&certUrl=${encodeURIComponent(certUrl)}&certId=${encodeURIComponent(data.credentialId)}`;
+            }
+
+            if (loadingState) loadingState.style.display = 'none';
+            if (successState) successState.style.display = 'block';
+
+        } catch (err) {
+            console.error('Credential verification failed:', err);
+            const errIdEl = document.getElementById('verification-error-id');
+            const manualInput = document.getElementById('verify-manual-input');
+            if (errIdEl) errIdEl.textContent = credentialId;
+            if (manualInput) manualInput.value = credentialId;
+
+            if (loadingState) loadingState.style.display = 'none';
+            if (errorState) errorState.style.display = 'block';
+        }
+    },
+
+    promptCredentialVerification() {
+        const modal = document.getElementById('credential-verification-modal');
+        if (!modal) return;
+        const loadingState = document.getElementById('verification-loading-state');
+        const errorState = document.getElementById('verification-error-state');
+        const successState = document.getElementById('verification-success-state');
+        const manualInput = document.getElementById('verify-manual-input');
+
+        modal.style.display = 'flex';
+        if (loadingState) loadingState.style.display = 'none';
+        if (successState) successState.style.display = 'none';
+        if (errorState) {
+            errorState.style.display = 'block';
+            const titleEl = errorState.querySelector('h3');
+            const msgEl = document.getElementById('verification-error-msg');
+            if (titleEl) titleEl.textContent = 'Verify Course Certificate';
+            if (msgEl) msgEl.textContent = 'Enter an official CareerPulse Credential ID (e.g. CP-CERT-2026-XXXXX) to authenticate:';
+            if (manualInput) {
+                manualInput.value = 'CP-CERT-2026-';
+                setTimeout(() => manualInput.focus(), 100);
+            }
+        }
+    },
+
+    verifyManuallyEnteredId() {
+        const manualInput = document.getElementById('verify-manual-input');
+        if (!manualInput || !manualInput.value.trim()) {
+            this.showToast('Please enter a valid Credential ID', 'warning');
+            return;
+        }
+        this.openPublicVerification(manualInput.value.trim());
+    },
+
+    copyCurrentVerificationUrl() {
+        const credId = this.currentVerifiedCredentialId;
+        if (!credId) return;
+        const url = `${window.location.origin}/?verify=${encodeURIComponent(credId)}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                this.showToast(`📋 Verifiable link copied to clipboard!`, 'success');
+            }).catch(() => {
+                prompt('Copy certificate verification link:', url);
+            });
+        } else {
+            prompt('Copy certificate verification link:', url);
+        }
+    },
+
+    handleVerificationOverlayClick(event) {
+        if (event.target && event.target.id === 'credential-verification-modal') {
+            this.closeVerificationModal();
+        }
+    },
+
+    closeVerificationModal() {
+        const modal = document.getElementById('credential-verification-modal');
+        if (modal) modal.style.display = 'none';
+    },
+
+    handleCompletionOverlayClick(event) {
+        if (event.target && event.target.id === 'course-completion-modal') {
+            this.closeCompletionModal();
+        }
     },
 
     closeCompletionModal() {
@@ -2954,6 +3214,7 @@ const App = {
         if (canvas) {
             const ctx = canvas.getContext('2d');
             if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.style.display = 'none';
         }
     },
 

@@ -12,4 +12,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByUserId(String userId);
     List<Enrollment> findByUserIdAndCourseId(String userId, String courseId);
     List<Enrollment> findByUserIdAndIsCoreTrack(String userId, boolean isCoreTrack);
+    Optional<Enrollment> findByCredentialId(String credentialId);
 }

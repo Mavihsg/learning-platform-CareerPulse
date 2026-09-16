@@ -58,6 +58,9 @@ public class Enrollment {
     @Column(name = "xp_awarded")
     private Boolean xpAwarded = Boolean.FALSE;
 
+    @Column(name = "credential_id")
+    private String credentialId;
+
     public enum Status {
         NOT_STARTED,
         IN_PROGRESS,
@@ -242,5 +245,13 @@ public class Enrollment {
 
     public void setXpAwarded(boolean xpAwarded) {
         this.xpAwarded = xpAwarded;
+    }
+
+    public String getCredentialId() {
+        return credentialId;
+    }
+
+    public void setCredentialId(String credentialId) {
+        this.credentialId = credentialId;
     }
 }

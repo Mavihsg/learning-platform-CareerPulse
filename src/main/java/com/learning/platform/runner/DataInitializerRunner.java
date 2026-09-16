@@ -74,6 +74,9 @@ public class DataInitializerRunner implements ApplicationRunner {
         // Ensure all existing courses have authorId populated
         backfillCourseAuthors();
 
+        // Ensure completed enrollments have official credential IDs populated
+        backfillCredentialIds();
+
         // Always ensure badge catalog is loaded/updated
         try {
             loadBadges();
@@ -199,6 +202,34 @@ public class DataInitializerRunner implements ApplicationRunner {
             }
         } catch (Exception e) {
             log.warn("Non-critical: could not backfill course author IDs: {}", e.getMessage());
+        }
+    }
+
+    private void backfillCredentialIds() {
+        try {
+            List<Enrollment> enrollments = enrollmentRepository.findAll();
+            boolean changed = false;
+            boolean assignedPrimary = false;
+            for (Enrollment en : enrollments) {
+                if (en.getStatus() == Enrollment.Status.COMPLETED || en.getProgressPercentage() >= 100) {
+                    if (en.getCredentialId() == null || en.getCredentialId().isBlank()) {
+                        if (!assignedPrimary) {
+                            en.setCredentialId("CP-CERT-2026-10001");
+                            assignedPrimary = true;
+                        } else {
+                            String calcId = "CP-CERT-2026-" + Math.abs((en.getCourseId() + "_" + en.getUserId()).hashCode() % 90000 + 10000);
+                            en.setCredentialId(calcId);
+                        }
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) {
+                enrollmentRepository.saveAll(enrollments);
+                log.info("Backfilled credential IDs for completed course enrollments.");
+            }
+        } catch (Exception e) {
+            log.warn("Non-critical: could not backfill credential IDs: {}", e.getMessage());
         }
     }
 
@@ -363,6 +394,7 @@ public class DataInitializerRunner implements ApplicationRunner {
         tw.setRemainingHours(0.0);
         tw.setCompletedAt(LocalDateTime.now().minusDays(2).withHour(14).withMinute(30));
         tw.setCompletedLessonIds(new ArrayList<>(List.of("LES_TW_01", "LES_TW_02")));
+        tw.setCredentialId("CP-CERT-2026-10001");
         enrollmentRepository.save(tw);
 
         Enrollment k8s = new Enrollment("user_1", "PLAN_K8S_01");

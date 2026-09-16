@@ -39,6 +39,14 @@ function createWindow() {
         }
     });
 
+    // Tag web document with desktop class on ready
+    mainWindow.webContents.on('dom-ready', () => {
+        mainWindow.webContents.executeJavaScript(`
+            document.body.classList.add('is-electron-desktop');
+            window.isElectronApp = true;
+        `).catch(() => {});
+    });
+
     // Load remote web application
     mainWindow.loadURL(APP_URL);
 
@@ -162,7 +170,19 @@ function buildAppMenu() {
             submenu: [
                 { role: 'reload' },
                 { role: 'forceReload' },
-                { role: 'toggleDevTools' },
+                {
+                    label: 'Toggle Developer Tools',
+                    accelerator: isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+                    click: () => {
+                        if (mainWindow) {
+                            if (mainWindow.webContents.isDevToolsOpened()) {
+                                mainWindow.webContents.closeDevTools();
+                            } else {
+                                mainWindow.webContents.openDevTools({ mode: 'detach' });
+                            }
+                        }
+                    }
+                },
                 { type: 'separator' },
                 { role: 'resetZoom' },
                 { role: 'zoomIn' },

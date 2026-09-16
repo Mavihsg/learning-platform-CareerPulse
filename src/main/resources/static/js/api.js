@@ -333,6 +333,13 @@ const API = {
 
     async logActiveStudyTime(userId = 'user_1', minutes = 1) {
         return this.post(`/courses/study-time/log?userId=${encodeURIComponent(userId)}&minutes=${minutes}`);
+    },
+
+    // =========================================================================
+    // PUBLIC CREDENTIAL VERIFICATION API
+    // =========================================================================
+    async verifyCredential(credentialId) {
+        return this.get(`/public/verify/${encodeURIComponent(credentialId)}`, true);
     }
 };
 

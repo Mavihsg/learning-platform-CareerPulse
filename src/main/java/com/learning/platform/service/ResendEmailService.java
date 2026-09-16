@@ -321,8 +321,17 @@ public class ResendEmailService {
         String courseTitle = (course != null && course.getTitle() != null) ? course.getTitle() : "Applied Data Engineering";
         String track = (course != null && course.getTrack() != null) ? course.getTrack() : "Engineering";
         int xpEarned = (course != null && course.getXpReward() > 0) ? course.getXpReward() : 650;
-        String certId = "CP-CERT-2026-" + Math.abs((courseTitle + userName).hashCode() % 90000 + 10000);
+        int totalLessons = (enrollment != null && enrollment.getTotalLessons() > 0) ? enrollment.getTotalLessons() : 13;
+        String certId = (enrollment != null && enrollment.getCredentialId() != null) 
+                ? enrollment.getCredentialId() 
+                : "CP-CERT-2026-" + Math.abs(((course != null ? course.getId() : "c") + "_" + (user != null ? user.getId() : "u")).hashCode() % 90000 + 10000);
         String issueDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"));
+        String verifyUrl = "https://careerpulse-lms.onrender.com/?verify=" + certId;
+        String linkedInUrl = "https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=" 
+                + java.net.URLEncoder.encode(courseTitle, java.nio.charset.StandardCharsets.UTF_8)
+                + "&organizationName=CareerPulse&issueYear=2026&certUrl=" 
+                + java.net.URLEncoder.encode(verifyUrl, java.nio.charset.StandardCharsets.UTF_8)
+                + "&certId=" + certId;
 
         return """
         <!DOCTYPE html>
@@ -366,7 +375,7 @@ public class ResendEmailService {
               <div class="cert-sub">Outstanding achievement! This certifies that</div>
               <div class="recipient-name">%s</div>
               <div class="cert-description">
-                has successfully fulfilled all required hands-on modules, verified video instruction checkpoints, and architectural assessments in
+                has successfully fulfilled all required %d comprehensive lessons, hands-on modules, verified video instruction checkpoints, and architectural assessments in
               </div>
               <div class="course-name-box">
                 <div class="course-name">%s</div>
@@ -396,16 +405,20 @@ public class ResendEmailService {
                   <div class="sig-title">Credential Verification Registry</div>
                 </div>
               </div>
-              <a href="http://localhost:8080" class="cta-btn">View My Dashboard & Badges →</a>
+              <div style="margin: 24px 0 12px 0; text-align: center;">
+                <a href="%s" class="cta-btn" style="display: inline-block; margin-right: 8px; background: #10b981;">🔗 Verify Credential Online</a>
+                <a href="%s" class="cta-btn" style="display: inline-block; background: #0a66c2; box-shadow: 0 4px 14px rgba(10, 102, 194, 0.4);">Add to LinkedIn →</a>
+              </div>
             </div>
           </div>
           <div class="footer">
-            <p>Dispatched via <a href="https://resend.com">Resend</a> to <strong>%s</strong> · Verifiable credential ID: %s</p>
+            <p>Dispatched via <a href="https://resend.com">Resend</a> to <strong>%s</strong> · Verifiable credential ID: <code>%s</code></p>
+            <p>Official Public Verification URL: <a href="%s" style="color: #38bdf8;">%s</a></p>
             <p>© 2026 CareerPulse Inc. All rights reserved.</p>
           </div>
         </body>
         </html>
-        """.formatted(courseTitle, userName, courseTitle, track, certId, issueDate, xpEarned, userEmail, certId);
+        """.formatted(courseTitle, userName, totalLessons, courseTitle, track, certId, issueDate, xpEarned, verifyUrl, linkedInUrl, userEmail, certId, verifyUrl, verifyUrl);
     }
 
     public String buildMilestoneHtml(User user, String milestoneType, String milestoneTitle, String milestoneDescription, int xpEarned) {

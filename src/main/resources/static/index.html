@@ -26,8 +26,8 @@
     <meta name="theme-color" content="#090B10">
 
     <!-- App Stylesheets -->
-    <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/theme.css?v=2.9">
+    <link rel="stylesheet" href="css/app.css?v=2.9">
 </head>
 
 <body>
@@ -254,6 +254,14 @@
                         <span>Discussions</span>
                         <span class="quiz-nav-chip" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4);">Forum</span>
                     </button>
+                    <button class="nav-item" id="nav-verify" onclick="App.promptCredentialVerification()">
+                        <svg class="nav-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                        <span>Verify Credential</span>
+                        <span class="quiz-nav-chip" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">Public</span>
+                    </button>
                 </div>
 
                 <!-- AUTHOR Section -->
@@ -336,6 +344,15 @@
                             </svg>
                         </button>
                     </div>
+
+                    <!-- Credential Verification Button -->
+                    <button class="btn-verify-header" id="btn-verify-header" onclick="App.promptCredentialVerification()" title="Verify Any Course Certificate by ID or URL">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            <path d="m9 12 2 2 4-4"/>
+                        </svg>
+                        <span>Verify Credential</span>
+                    </button>
 
                     <!-- Core Track Quick CTA -->
                     <div class="core-track-cta">
@@ -686,7 +703,7 @@
                             <div class="core-track-cta">
                                 <span class="core-pct-text" id="plan-core-pct">38%</span>
                                 <span class="core-track-label">CORE TRACK</span>
-                                <button class="btn-resume-header" onclick="App.resumeFirstIncompleteLesson()">Resume
+                                <button class="btn-resume-header" id="btn-plan-resume-header" onclick="App.resumeFirstIncompleteLesson()">Resume
                                     lesson</button>
                             </div>
                         </div>
@@ -1679,9 +1696,10 @@
     <!-- =========================================================================
          COURSE COMPLETION CELEBRATION MODAL WITH CONFETTI
          ========================================================================= -->
-    <div class="completion-modal-overlay" id="course-completion-modal" style="display: none;">
+    <div class="completion-modal-overlay" id="course-completion-modal" style="display: none;" onclick="App.handleCompletionOverlayClick(event)">
         <canvas id="confetti-canvas"></canvas>
         <div class="completion-modal-card">
+            <button class="level-modal-close-btn" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1;" onclick="App.closeCompletionModal()" aria-label="Close celebration">&times;</button>
             <div class="celebration-badge-glow">
                 <span class="celebration-emoji">🏆</span>
             </div>
@@ -1710,11 +1728,138 @@
                 </div>
             </div>
 
-            <div class="completion-modal-actions">
+            <div class="completion-credential-pill" id="completion-modal-credential-container" style="margin: 0.85rem 0 1.25rem; padding: 0.75rem 1rem; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(59, 130, 246, 0.35); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; text-align: left; flex-wrap: wrap;">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.05em;">VERIFIED CREDENTIAL ID</span>
+                    <code id="completion-modal-credential-id" style="color: var(--primary-accent, #2563eb); font-weight: 700; font-size: 0.95rem;">CP-CERT-2026-10001</code>
+                </div>
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" class="btn-secondary btn-sm" id="btn-completion-copy-link" onclick="App.copyCurrentCredentialUrl()" title="Copy Public Verifiable Link" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">📋 Copy Link</button>
+                    <button type="button" class="btn-secondary btn-sm" id="btn-completion-view-verify" onclick="App.viewCurrentCredentialVerification()" title="Verify Certificate Authenticity" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">🛡️ Verify</button>
+                    <a id="btn-completion-linkedin" href="#" target="_blank" class="btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; padding: 0.3rem 0.6rem; font-size: 0.75rem;">💼 Add to LinkedIn</a>
+                </div>
+            </div>
+
+            <div class="completion-modal-actions" style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
                 <button class="btn-secondary" onclick="App.closeCompletionModal()">Stay on Plan</button>
+                <button class="btn-secondary" id="btn-completion-email-cert">
+                    🎓 Email Certificate
+                </button>
                 <button class="btn-primary btn-completion-glow" onclick="App.goToMyLearningFromCompletion()">
                     View in My Learning →
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         PUBLIC CREDENTIAL VERIFICATION MODAL (NO LOGIN REQUIRED)
+         ========================================================================= -->
+    <div class="completion-modal-overlay" id="credential-verification-modal" style="display: none;" onclick="App.handleVerificationOverlayClick(event)">
+        <div class="completion-modal-card credential-modal-card" style="max-width: 580px; text-align: left; position: relative; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            <button class="level-modal-close-btn" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1;" onclick="App.closeVerificationModal()" aria-label="Close verification">&times;</button>
+            
+            <!-- Loading State -->
+            <div id="verification-loading-state" style="display: none; text-align: center; padding: 3rem 1rem;">
+                <div class="dash-hero-pulse" style="margin: 0 auto 1rem; width: 32px; height: 32px; background: #3b82f6;"></div>
+                <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.3rem;">Verifying Credential on CareerPulse Registry...</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Querying cryptographic enrollment records</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="verification-error-state" style="display: none; text-align: center; padding: 2rem 1rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">⚠️</div>
+                <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-danger, #ef4444); margin-bottom: 0.5rem;">Certificate Not Found</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;" id="verification-error-msg">
+                    We could not find an official credential matching ID <code id="verification-error-id" style="background: rgba(239,68,68,0.1); color:#ef4444; padding:2px 6px; border-radius:4px;"></code>.
+                </p>
+                <div style="display: flex; gap: 0.5rem; max-width: 420px; margin: 0 auto 1.25rem;">
+                    <input type="text" id="verify-manual-input" class="form-input" placeholder="e.g. CP-CERT-2026-10001" style="flex: 1;" onkeydown="if(event.key==='Enter') App.verifyManuallyEnteredId()" />
+                    <button class="btn-primary" onclick="App.verifyManuallyEnteredId()">Verify</button>
+                </div>
+                <button class="btn-secondary" onclick="App.closeVerificationModal()">Close</button>
+            </div>
+
+            <!-- Success / Verified State -->
+            <div id="verification-success-state">
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                <path d="m9 12 2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; color: #10b981; text-transform: uppercase;">Official Verified Credential</span>
+                            <h2 style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--text-primary);">Certificate Authenticity Record</h2>
+                        </div>
+                    </div>
+                    <span class="quiz-nav-chip" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600; padding: 0.25rem 0.6rem;">Active & Genuine</span>
+                </div>
+
+                <!-- Verified Learner Card -->
+                <div style="background: var(--bg-hover, rgba(255,255,255,0.03)); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <img id="verify-learner-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Isha" alt="Learner Avatar" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--primary-accent, #3b82f6); background: var(--bg-card);" />
+                        <div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Issued To Learner</div>
+                            <h3 id="verify-learner-name" style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin: 0;">Isha Agarwal</h3>
+                            <div id="verify-learner-email" style="font-size: 0.8rem; color: var(--text-muted);">i***@enterprise.io</div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 0.85rem;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem;">Completed Curriculum</div>
+                        <h4 id="verify-course-title" style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.4rem 0;">Applied Data Engineering</h4>
+                        <p id="verify-course-desc" style="font-size: 0.85rem; color: var(--text-secondary, var(--text-muted)); margin: 0 0 0.85rem 0; line-height: 1.4;"></p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem;">
+                            <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">TRACK & CATEGORY</span>
+                                <strong id="verify-track-category" style="font-size: 0.85rem; color: var(--text-primary);">Data Engineering</strong>
+                            </div>
+                            <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">COMPLETION DATE</span>
+                                <strong id="verify-issued-date" style="font-size: 0.85rem; color: var(--text-primary);">Sep 6, 2026</strong>
+                            </div>
+                            <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">DIFFICULTY & LESSONS</span>
+                                <strong id="verify-difficulty-lessons" style="font-size: 0.85rem; color: var(--text-primary);">Intermediate (13 Lessons)</strong>
+                            </div>
+                            <div style="background: var(--bg-card); padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 0.7rem; color: var(--text-muted); display: block;">REGISTRY ID</span>
+                                <strong id="verify-credential-id" style="font-size: 0.85rem; color: var(--primary-accent, #3b82f6); font-family: monospace;">CP-CERT-2026-10001</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verified Skills -->
+                <div style="margin-bottom: 1.25rem;">
+                    <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; margin-bottom: 0.4rem;">Validated Competencies & Skills</span>
+                    <div id="verify-skills-container" style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                        <!-- Skill pills dynamically rendered -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons for Recruiter / Interviewer -->
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">
+                        Issuer: <strong id="verify-issuer-name">CareerPulse Enterprise LMS</strong>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn-secondary btn-sm" id="btn-copy-verification-url" onclick="App.copyCurrentVerificationUrl()">
+                            📋 Copy Verifiable Link
+                        </button>
+                        <a class="btn-secondary btn-sm" id="btn-linkedin-share" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 0.3rem; text-decoration: none;">
+                            💼 Add to LinkedIn
+                        </a>
+                        <button class="btn-primary btn-sm" onclick="App.promptCredentialVerification()">
+                            🔍 Verify Another ID
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1974,8 +2119,8 @@
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js?v=2.7"></script>
-    <script src="js/app.js?v=2.7"></script>
+    <script src="js/api.js?v=2.9"></script>
+    <script src="js/app.js?v=2.9"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

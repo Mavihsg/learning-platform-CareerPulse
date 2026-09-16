@@ -9,7 +9,8 @@
     "dist": "electron-builder -p never",
     "dist:win": "electron-builder --win -p never",
     "dist:mac": "electron-builder --mac -p never",
-    "dist:linux": "electron-builder --linux -p never"
+    "dist:linux": "electron-builder --linux -p never",
+    "test:e2e": "playwright test"
   },
   "keywords": [
     "careerpulse",
@@ -21,6 +22,7 @@
   "author": "CareerPulse Engineering Team",
   "license": "UNLICENSED",
   "devDependencies": {
+    "@playwright/test": "^1.46.0",
     "electron": "^31.0.0",
     "electron-builder": "^24.13.3"
   }
