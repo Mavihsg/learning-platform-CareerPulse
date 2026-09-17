@@ -65,19 +65,35 @@ public abstract class BasePlaywrightUiTest {
         }
     }
 
+    protected long testStartTime;
+    protected String lastCapturedScreenshot;
+
     @BeforeEach
     void createContextAndPage() {
+        testStartTime = System.currentTimeMillis();
+        lastCapturedScreenshot = null;
         context = browser.newContext(new Browser.NewContextOptions().setViewportSize(1280, 800));
         page = context.newPage();
     }
 
     @AfterEach
     void cleanupContext(TestInfo testInfo) {
+        long duration = System.currentTimeMillis() - testStartTime;
+        String className = testInfo.getTestClass().map(Class::getSimpleName).orElse("BasePlaywrightUiTest");
+        String methodName = testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("unknown");
+        String displayName = testInfo.getDisplayName();
+        RegressionReportGenerator.recordTest(className, methodName, displayName, "PASSED", duration, lastCapturedScreenshot);
+
         if (context != null) {
             try {
                 context.close();
             } catch (Exception ignored) {}
         }
+    }
+
+    @AfterAll
+    void afterAllTestsComplete() {
+        RegressionReportGenerator.generateOrUpdateReport();
     }
 
     protected String getBaseUrl() {
@@ -113,8 +129,13 @@ public abstract class BasePlaywrightUiTest {
     protected void captureScreenshot(String testName) {
         try {
             new File("target/playwright-screenshots").mkdirs();
+            new File("docs/screenshots").mkdirs();
+            String filename = testName.endsWith(".png") ? testName : (testName + ".png");
             page.screenshot(new Page.ScreenshotOptions()
-                    .setPath(Paths.get("target/playwright-screenshots/" + testName + ".png")));
+                    .setPath(Paths.get("target/playwright-screenshots/" + filename)));
+            page.screenshot(new Page.ScreenshotOptions()
+                    .setPath(Paths.get("docs/screenshots/" + filename)));
+            lastCapturedScreenshot = filename;
         } catch (Exception ignored) {}
     }
 }

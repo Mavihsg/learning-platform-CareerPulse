@@ -92,15 +92,41 @@ See the [**CloudFormation README**](./cloudformation/README.md) for full deploym
 
 ---
 
-## 🧪 Automated Testing
+## 📖 Documentation & User Guides
 
-Run the automated test suite locally:
+A dedicated enterprise documentation suite is available in the [`docs/`](./docs/) directory:
+
+- **[Documentation Hub & Feature Index](./docs/README.md)**: Master architecture map and table of contents.
+- **[End-to-End User Guide](./docs/USER_GUIDE.md)**: Comprehensive manual for Learners, Authors, and Credential Verifiers.
+- **[Automated Regression Test Report](./docs/REGRESSION_TEST_REPORT.md)**: Live regression test matrix and screenshot evidence generated dynamically by the Playwright test suite.
+- **[Feature Deep Dives](./docs/features/)**:
+  1. [Dashboard & Gamification](./docs/features/01_dashboard_and_gamification.md)
+  2. [Catalog & Course Enrollment](./docs/features/02_catalog_and_enrollment.md)
+  3. [My Learning & Video Tracking](./docs/features/03_my_learning_and_video_tracking.md)
+  4. [Course Completion & Certification](./docs/features/04_course_completion_and_certification.md)
+  5. [Public Credential Verification](./docs/features/05_credential_verification.md)
+  6. [AI Quiz Arena](./docs/features/06_ai_quiz_arena.md)
+  7. [Discussions Forum & AI Mentor](./docs/features/07_discussions_forum_and_ai_mentor.md)
+  8. [Leaderboard & Learner Passport](./docs/features/08_leaderboard_and_learner_passport.md)
+  9. [Author Mode & Plan Builder](./docs/features/09_author_mode_and_plan_builder.md)
+  10. [Cross-Platform Desktop & Mobile](./docs/features/10_cross_platform_desktop_and_mobile.md)
+
+---
+
+## 🧪 Automated Testing & Release Verification
+
+Run the automated regression test suite locally:
 ```bash
+# Run all unit, integration, and UI Playwright regression tests
 mvn test
+
+# Run UI E2E tests specifically and auto-update docs/REGRESSION_TEST_REPORT.md
+mvn test -Dtest="*UiTest"
 ```
-All 15 unit and integration tests run in an isolated in-memory environment with full coverage of auth, user profiles, courses, and data ingestion.
+Every Playwright test execution automatically captures viewport screenshots into `docs/screenshots/` and synchronizes the live test results into **[`docs/REGRESSION_TEST_REPORT.md`](./docs/REGRESSION_TEST_REPORT.md)** for release auditability.
 
 ---
 
 ## 📄 License
 This project is open source and available under the [MIT License](LICENSE).
+
