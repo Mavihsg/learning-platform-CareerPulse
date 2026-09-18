@@ -31,10 +31,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponseDto>> login(@RequestBody AuthRequestDto request) {
         String query = request.getEmail() != null ? request.getEmail().trim() : "";
+        if (query.isEmpty()) {
+            return ResponseEntity.status(400).body(ApiResponse.error("Work email or User ID is required"));
+        }
+
         Optional<User> userOpt = userRepository.findAll().stream()
                 .filter(u -> u.getEmail().equalsIgnoreCase(query) 
                         || u.getId().equalsIgnoreCase(query) 
-                        || u.getName().toLowerCase().contains(query.toLowerCase())
+                        || u.getName().equalsIgnoreCase(query)
                         || (u.getId().equals("user_1") && query.equalsIgnoreCase("shivam.gupta@enterprise.io")))
                 .findFirst();
 
@@ -45,16 +49,22 @@ public class AuthController {
             return ResponseEntity.ok(ApiResponse.ok("Login successful", AuthResponseDto.success(token, dto)));
         }
 
-        // If not found, return first default user for seamless experience
-        List<User> all = userRepository.findAll();
-        if (!all.isEmpty()) {
-            User defaultUser = all.get(0);
-            UserProfileDto dto = userService.toDto(defaultUser);
-            String token = "TOKEN_DEFAULT_" + UUID.randomUUID().toString().substring(0, 8);
-            return ResponseEntity.ok(ApiResponse.ok("User authenticated", AuthResponseDto.success(token, dto)));
+        // If email was provided with '@', auto-provision a new user account for this email
+        // so the user gets their OWN clean personal account instead of falling back to someone else!
+        if (query.contains("@")) {
+            String prefix = query.split("@")[0];
+            String name = java.util.Arrays.stream(prefix.split("[._-]"))
+                    .filter(w -> !w.isEmpty())
+                    .map(w -> Character.toUpperCase(w.charAt(0)) + (w.length() > 1 ? w.substring(1).toLowerCase() : ""))
+                    .collect(java.util.stream.Collectors.joining(" "));
+            if (name.isEmpty()) name = "Learner";
+            User newUser = userService.registerUser(name, query, "Software Engineer", "ROLE_SR_BACKEND_ENG");
+            UserProfileDto dto = userService.toDto(newUser);
+            String token = "TOKEN_" + UUID.randomUUID().toString().substring(0, 12);
+            return ResponseEntity.ok(ApiResponse.ok("Account provisioned and authenticated", AuthResponseDto.success(token, dto)));
         }
 
-        return ResponseEntity.status(401).body(ApiResponse.error("Invalid credentials"));
+        return ResponseEntity.status(401).body(ApiResponse.error("User not found. Please enter a valid work email or select a demo profile."));
     }
 
     @PostMapping("/register")

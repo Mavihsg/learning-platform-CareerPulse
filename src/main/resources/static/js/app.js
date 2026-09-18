@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const App = {
-    currentUserId: 'user_1',
+    currentUserId: null,
     currentUser: null,
     dashboardData: null,
     courses: [],
@@ -196,15 +196,66 @@ const App = {
         if (storedUser) {
             try {
                 this.currentUser = JSON.parse(storedUser);
-                this.currentUserId = this.currentUser.id || 'user_1';
-                this.hideAuthModal();
-                this.loadInitialData();
+                this.currentUserId = this.currentUser.id || null;
+                if (this.currentUserId) {
+                    this.hideAuthModal();
+                    this.loadInitialData();
+                    return;
+                }
             } catch (e) {
-                this.showAuthModal();
+                console.warn('Corrupt auth session detected:', e);
             }
-        } else {
-            this.showAuthModal();
         }
+        // Unauthenticated / Incognito state: enforce clear neutral UI and show login gate
+        this.clearUserState();
+        this.showAuthModal();
+    },
+
+    clearUserState() {
+        this.currentUser = null;
+        this.currentUserId = null;
+        this.dashboardData = null;
+        this.courses = [];
+        this.activeCourse = null;
+        this.activeEnrollment = null;
+        this.teamData = null;
+        this.myLearningCourses = [];
+
+        const el = (id) => document.getElementById(id);
+        if (el('dash-greeting')) el('dash-greeting').textContent = 'Welcome to CareerPulse';
+        if (el('dash-subtitle')) el('dash-subtitle').textContent = 'Sign in to track your personalized enterprise skill advancement.';
+        if (el('dash-hero-target')) el('dash-hero-target').innerHTML = 'Targeting <strong>Enterprise Skills</strong>. Sign in to start your primary track.';
+        if (el('dash-hero-streak')) el('dash-hero-streak').textContent = '0 Days';
+        if (el('dash-hero-xp')) el('dash-hero-xp').textContent = '0 XP';
+        if (el('dash-hero-shield')) el('dash-hero-shield').textContent = '0 Shields';
+        if (el('dash-hero-level')) el('dash-hero-level').textContent = 'Level 1';
+        if (el('dash-hero-level-title')) el('dash-hero-level-title').textContent = 'Novice Learner';
+        if (el('hud-level-val')) el('hud-level-val').textContent = 'LVL 1 · NOVICE';
+        if (el('hud-streak-val')) el('hud-streak-val').textContent = '0';
+        if (el('header-core-pct')) el('header-core-pct').textContent = '0%';
+        if (el('sidebar-user-name')) el('sidebar-user-name').textContent = 'Guest Learner';
+        if (el('sidebar-user-role')) el('sidebar-user-role').textContent = 'Sign in to begin';
+        if (el('sidebar-avatar')) el('sidebar-avatar').src = 'https://api.dicebear.com/7.x/bottts/svg?seed=CareerPulse';
+        if (el('dash-core-title')) el('dash-core-title').textContent = 'Career Learning Track';
+        if (el('dash-core-sub')) el('dash-core-sub').textContent = 'Sign in to begin your customized modules';
+        if (el('dash-core-pct-badge')) el('dash-core-pct-badge').textContent = '0% complete';
+        if (el('dash-donut-text')) el('dash-donut-text').textContent = '0%';
+        const donutCircle = el('dash-donut-fill');
+        if (donutCircle) donutCircle.style.strokeDashoffset = 251.2;
+        if (el('dash-stat-lessons')) el('dash-stat-lessons').textContent = '0/0';
+        if (el('dash-stat-time')) el('dash-stat-time').textContent = '0 h';
+        if (el('dash-stat-streak')) el('dash-stat-streak').textContent = '0';
+        if (el('dash-stat-plans')) el('dash-stat-plans').textContent = '0';
+        if (el('dash-upnext-title')) el('dash-upnext-title').textContent = 'Sign in to continue';
+        if (el('dash-upnext-meta')) el('dash-upnext-meta').textContent = 'Module · Duration';
+        if (el('dash-weekly-caption')) el('dash-weekly-caption').textContent = 'Sign in to track your weekly study time.';
+        if (el('dash-daily-quiz-title')) el('dash-daily-quiz-title').textContent = 'Daily AI Quiz Arena';
+
+        // Clear auth inputs to prevent browser autofill or stale inputs
+        const emailInput = el('auth-email');
+        if (emailInput) emailInput.value = '';
+        const pwInput = el('auth-password');
+        if (pwInput) pwInput.value = '';
     },
 
     showAuthModal() {
@@ -409,13 +460,8 @@ const App = {
 
     signOut() {
         localStorage.removeItem('career_pulse_auth_user');
-        this.currentUser = null;
-        this.currentUserId = null;
-        this.dashboardData = null;
-        this.courses = [];
-        this.activeCourse = null;
-        this.activeEnrollment = null;
-        this.teamData = null;
+        try { sessionStorage.clear(); } catch (e) {}
+        this.clearUserState();
         // Full reload to reset all state and show auth gate
         window.location.reload();
     },
@@ -546,25 +592,25 @@ const App = {
 
         const greetingEl = el('dash-greeting');
         if (greetingEl) {
-            greetingEl.textContent = d.greeting || `Good afternoon, ${d.userName ? d.userName.split(' ')[0] : 'Shivam'}`;
+            greetingEl.textContent = d.greeting || `Good afternoon, ${d.userName ? d.userName.split(' ')[0] : 'Learner'}`;
         }
         const subtitleEl = el('dash-subtitle');
         if (subtitleEl) {
-            subtitleEl.textContent = d.subtitle || 'Five lessons behind you this week. One module left before the capstone.';
+            subtitleEl.textContent = d.subtitle || (d.userName ? 'Five lessons behind you this week. One module left before the capstone.' : 'Sign in to access your customized learning track.');
         }
         const sideNameEl = el('sidebar-user-name');
         if (sideNameEl) {
-            sideNameEl.textContent = d.userName || 'Shivam Gupta';
+            sideNameEl.textContent = d.userName || 'Guest Learner';
         }
 
         if (this.currentUser) {
             const sideRoleEl = el('sidebar-user-role');
             if (sideRoleEl) {
-                sideRoleEl.textContent = this.currentUser.currentRoleTitle || this.currentUser.role || 'Junior Data Engineer';
+                sideRoleEl.textContent = this.currentUser.currentRoleTitle || this.currentUser.role || 'Enterprise Learner';
             }
             const sideAvatarEl = el('sidebar-avatar');
             if (sideAvatarEl) {
-                sideAvatarEl.src = this.currentUser.avatar || this.currentUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${d.userName || 'Shivam'}`;
+                sideAvatarEl.src = this.currentUser.avatar || this.currentUser.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${d.userName || 'CareerPulse'}`;
             }
         }
 
@@ -2155,7 +2201,7 @@ const App = {
                 category: 'Engineering',
                 difficultyLevel: 'INTERMEDIATE',
                 description: 'Comprehensive modular curriculum created with Career Pulse Plan Builder.',
-                authorName: (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Shivam Gupta',
+                authorName: (this.currentUser && this.currentUser.name) ? this.currentUser.name : 'Learner',
                 authorId: (this.currentUser && this.currentUser.id) ? this.currentUser.id : this.currentUserId,
                 status: 'PUBLISHED',
                 modules: this.builderState.modules.map((m, mIdx) => ({
@@ -3686,7 +3732,7 @@ const App = {
     },
 
     async promptChangeAvatar() {
-        const defaultSeeds = ['TechLead', 'CodeNinja', 'DataWizard', 'CyberSamurai', 'CloudPioneer', 'Shivam', 'QuantumDev'];
+        const defaultSeeds = ['TechLead', 'CodeNinja', 'DataWizard', 'CyberSamurai', 'CloudPioneer', 'TechExplorer', 'QuantumDev'];
         const randomSeed = defaultSeeds[Math.floor(Math.random() * defaultSeeds.length)];
         const current = (this.currentUser && (this.currentUser.avatar || this.currentUser.avatarUrl)) || `https://api.dicebear.com/7.x/bottts/svg?seed=${randomSeed}`;
         const newUrl = prompt('Enter image URL for your profile picture (or leave blank for a new random Bottts avatar):', current);

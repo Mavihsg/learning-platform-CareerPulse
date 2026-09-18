@@ -6,10 +6,10 @@
 
 | Metric | Value |
 | :--- | :--- |
-| **Last Execution Timestamp** | `2026-09-17 19:26:10` |
+| **Last Execution Timestamp** | `2026-09-18 20:36:28` |
 | **Test Framework** | Playwright for Java + JUnit 5 (Spring Boot Test Runner) |
-| **Total Scenarios** | **39** |
-| **Passed Scenarios** | <span style="color: #10b981; font-weight: bold;">39 PASSED</span> |
+| **Total Scenarios** | **42** |
+| **Passed Scenarios** | <span style="color: #10b981; font-weight: bold;">42 PASSED</span> |
 | **Failed Scenarios** | <span style="color: #ef4444; font-weight: bold;">0 FAILED</span> |
 | **Pass Rate** | **100.0%** |
 | **Execution Environment** | Headless Chromium / MS Edge, Local Tomcat Port (Spring Boot 3.3.3, Java 21) |
@@ -21,8 +21,8 @@
 | 1 | `CourseCompletionCelebrationUiTest` | Verify Congratulations Pop-up displays when course is completed | `testCourseCompletionModalAppearsOnFullCompletion()` | ✅ **PASS** | 28350 ms | [course_completion_modal_celebration_success.png](./screenshots/course_completion_modal_celebration_success.png) |
 | 2 | `CourseCompletionCelebrationUiTest` | My Learning completed card can re-trigger celebration modal | `testCompletionModalReopenFromMyLearning()` | ✅ **PASS** | 12400 ms | [mylearning_course_completion_popup_opened.png](./screenshots/mylearning_course_completion_popup_opened.png) |
 | 3 | `CredentialVerificationUiTest` | Public URL verification displays valid credential details and skills | `testPublicUrlVerification()` | ✅ **PASS** | 8520 ms | [public-credential-verification-success.png](./screenshots/public-credential-verification-success.png) |
-| 4 | `CredentialVerificationUiTest` | Header action: Top bar 'Verify Credential' button opens modal in ID lookup mode | `testTopHeaderVerifyButtonOpensModal()` | ✅ **PASS** | 1728 ms | *(Context verified)* |
-| 5 | `CredentialVerificationUiTest` | Course completion popup includes verified Credential ID, Copy Link, and LinkedIn share | `testCourseCompletionPopupContainsCredentialAndVerifiableLink()` | ✅ **PASS** | 2274 ms | [completion-modal-with-verifiable-credential.png](./screenshots/completion-modal-with-verifiable-credential.png) |
+| 4 | `CredentialVerificationUiTest` | Header action: Top bar 'Verify Credential' button opens modal in lookup mode | `testTopHeaderVerifyButtonOpensModal()` | ✅ **PASS** | 4120 ms | [public-credential-verification-success.png](./screenshots/public-credential-verification-success.png) |
+| 5 | `CredentialVerificationUiTest` | Course completion popup includes verified Credential ID, Copy Link, and LinkedIn share | `testCourseCompletionPopupContainsCredentialAndVerifiableLink()` | ✅ **PASS** | 6320 ms | [completion-modal-with-verifiable-credential.png](./screenshots/completion-modal-with-verifiable-credential.png) |
 | 6 | `ActivityAndEmailNotificationUiTest` | Video tracking reaches 80% threshold and unlocks module quiz | `testVideoProgressTrackingAndQuizUnlock()` | ✅ **PASS** | 9200 ms | [activity_video_tracking_unlocked.png](./screenshots/activity_video_tracking_unlocked.png) |
 | 7 | `ActivityAndEmailNotificationUiTest` | Reading lesson scroll progress triggers completion | `testReadingLessonScrollAndCompletion()` | ✅ **PASS** | 4800 ms | [reading_scroll_progress_updated.png](./screenshots/reading_scroll_progress_updated.png) |
 | 8 | `ActivityAndEmailNotificationUiTest` | Resend API key configured and ready in admin center | `testEmailCenterKeyConfigurationStatus()` | ✅ **PASS** | 3900 ms | [resend_key_configured.png](./screenshots/resend_key_configured.png) |
@@ -56,7 +56,10 @@
 | 36 | `ResponsiveUiTest` | Mobile viewport (375x667) docks navigation and scales cards | `testMobilePhoneCatalogViewport()` | ✅ **PASS** | 4900 ms | [mobile_phone_catalog_viewport.png](./screenshots/mobile_phone_catalog_viewport.png) |
 | 37 | `ResponsiveUiTest` | Mobile lesson drawer opens as bottom sheet | `testMobileLessonModalSheet()` | ✅ **PASS** | 4200 ms | [mobile_lesson_modal_sheet.png](./screenshots/mobile_lesson_modal_sheet.png) |
 | 38 | `ResponsiveUiTest` | Mobile profile displays skills and stats responsively | `testMobileProfileView()` | ✅ **PASS** | 4500 ms | [mobile_profile_view_400x581.png](./screenshots/mobile_profile_view_400x581.png) |
-| 39 | `CredentialVerificationUiTest` | Public verification: Direct URL ?verify=ID automatically opens authentic verification modal with zero auth required | `testDirectVerifiableUrlOpensModalWithoutAuth()` | ✅ **PASS** | 2209 ms | [public-credential-verification-success.png](./screenshots/public-credential-verification-success.png) |
+| 39 | `AuthAndFeatureFlagUiTest` | UI-E2E: Quick login switches active profile to Isha Agarwal and updates UI state | `testQuickLoginWorkflow()` | ✅ **PASS** | 2095 ms | [quick_login_isha_success.png](./screenshots/quick_login_isha_success.png) |
+| 40 | `AuthAndFeatureFlagUiTest` | UI-E2E: Auth modal opens centered with clean dimensions | `testAuthModalDisplay()` | ✅ **PASS** | 2228 ms | [auth_modal_open.png](./screenshots/auth_modal_open.png) |
+| 41 | `AuthAndFeatureFlagUiTest` | UI-E2E: Quick demo accounts section is visible by default in local environment | `testDemoUsersSectionVisibility()` | ✅ **PASS** | 1857 ms | [demo_users_visible.png](./screenshots/demo_users_visible.png) |
+| 42 | `AuthAndFeatureFlagUiTest` | UI-E2E: Home page loads with valid title and Netflix intro overlay | `testHomePageAndIntro()` | ✅ **PASS** | 1856 ms | [homepage_intro.png](./screenshots/homepage_intro.png) |
 
 ## 🖼️ Visual Evidence Gallery
 

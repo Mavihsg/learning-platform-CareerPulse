@@ -78,13 +78,13 @@
             <form id="auth-form-signin" onsubmit="App.handleLogin(event)" class="auth-form">
                 <div class="form-group">
                     <label class="form-label" for="auth-email">Work Email or User ID</label>
-                    <input type="text" id="auth-email" class="form-input" placeholder="shivam.gupta@enterprise.io"
-                        required>
+                    <input type="text" id="auth-email" class="form-input" placeholder="e.g. your.name@enterprise.io"
+                        required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="auth-password">Password</label>
-                    <input type="password" id="auth-password" class="form-input" value="••••••••"
-                        placeholder="Enter password" required>
+                    <input type="password" id="auth-password" class="form-input"
+                        placeholder="Enter password" required autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn-primary btn-full-width" id="btn-submit-signin">
                     Sign In to Portal
@@ -95,17 +95,17 @@
             <form id="auth-form-register" onsubmit="App.handleRegister(event)" class="auth-form" style="display: none;">
                 <div class="form-group">
                     <label class="form-label" for="reg-name">Full Name</label>
-                    <input type="text" id="reg-name" class="form-input" placeholder="e.g. Shivam Gupta" required>
+                    <input type="text" id="reg-name" class="form-input" placeholder="e.g. Alex Rivera" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-email">Work Email</label>
-                    <input type="email" id="reg-email" class="form-input" placeholder="e.g. shivam.gupta@enterprise.io"
+                    <input type="email" id="reg-email" class="form-input" placeholder="e.g. alex.rivera@enterprise.io"
                         required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-role">Current Role Title</label>
-                    <input type="text" id="reg-role" class="form-input" value="Junior Data Engineer"
-                        placeholder="e.g. Junior Data Engineer">
+                    <input type="text" id="reg-role" class="form-input"
+                        placeholder="e.g. Software Engineer">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="reg-track">Target Career Track</label>
@@ -299,10 +299,10 @@
                 <button class="user-profile-pill-btn" id="nav-profile" onclick="App.navigate('profile')"
                     title="View your profile">
                     <img id="sidebar-avatar" class="user-avatar"
-                        src="https://api.dicebear.com/7.x/bottts/svg?seed=Shivam" alt="User Avatar">
+                        src="https://api.dicebear.com/7.x/bottts/svg?seed=CareerPulse" alt="User Avatar">
                     <div class="user-info-text">
-                        <div class="user-name" id="sidebar-user-name">Shivam Gupta</div>
-                        <div class="user-role" id="sidebar-user-role">Junior Data Engineer</div>
+                        <div class="user-name" id="sidebar-user-name">Guest Learner</div>
+                        <div class="user-role" id="sidebar-user-role">Sign in to begin</div>
                     </div>
                     <svg class="sidebar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m9 18 6-6-6-6" />
@@ -330,7 +330,7 @@
                     <!-- Interactive Level Pill (Opens XP & Streak Modal) -->
                     <div class="hud-item hud-level-wrapper">
                         <button class="hud-level-btn" id="btn-level-modal" onclick="App.toggleLevelModal()" title="Click to view XP Progression & Streak">
-                            <span class="hud-level-pill" id="hud-level-val">LVL 2 · APPRENTICE</span>
+                            <span class="hud-level-pill" id="hud-level-val">LVL 1 · LEARNER</span>
                             <svg class="hud-level-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
@@ -348,7 +348,7 @@
 
                     <!-- Core Track Quick CTA -->
                     <div class="core-track-cta">
-                        <span class="core-pct-text" id="header-core-pct">38%</span>
+                        <span class="core-pct-text" id="header-core-pct">0%</span>
                         <span class="core-track-label">CORE TRACK</span>
                         <button class="btn-resume-header" onclick="App.navigate('plan')">Resume lesson</button>
                     </div>
@@ -386,28 +386,28 @@
                                 <span class="dash-hero-pulse"></span>
                                 <span>ENTERPRISE LEARNER BENCHMARK</span>
                             </div>
-                            <h1 class="dash-hero-greeting" id="dash-greeting">Good afternoon, Shivam</h1>
-                            <p class="dash-hero-subtitle" id="dash-subtitle">Targeting <strong>Cloud Solutions Architect</strong>. 5 of 13 lessons complete in your primary track.</p>
+                            <h1 class="dash-hero-greeting" id="dash-greeting">Welcome to CareerPulse</h1>
+                            <p class="dash-hero-subtitle" id="dash-subtitle">Enterprise continuous learning and career advancement ecosystem.</p>
                             <div class="dash-hero-metrics">
                                 <div class="dash-hero-pill">
                                     <span class="pill-icon">🔥</span>
-                                    <span class="pill-val" id="dash-hero-streak">12 Days</span>
+                                    <span class="pill-val" id="dash-hero-streak">0 Days</span>
                                     <span class="pill-lbl">Streak</span>
                                 </div>
                                 <div class="dash-hero-pill">
                                     <span class="pill-icon">⚡</span>
-                                    <span class="pill-val" id="dash-hero-xp">480 XP</span>
+                                    <span class="pill-val" id="dash-hero-xp">0 XP</span>
                                     <span class="pill-lbl">Total XP</span>
                                 </div>
                                 <div class="dash-hero-pill">
                                     <span class="pill-icon">🛡️</span>
-                                    <span class="pill-val" id="dash-hero-shield">1 Shield</span>
+                                    <span class="pill-val" id="dash-hero-shield">0 Shields</span>
                                     <span class="pill-lbl">Active</span>
                                 </div>
                                 <div class="dash-hero-pill">
                                     <span class="pill-icon">🎯</span>
-                                    <span class="pill-val" id="dash-hero-level">Level 2</span>
-                                    <span class="pill-lbl" id="dash-hero-level-title">Apprentice</span>
+                                    <span class="pill-val" id="dash-hero-level">Level 1</span>
+                                    <span class="pill-lbl" id="dash-hero-level-title">Learner</span>
                                 </div>
                             </div>
                         </div>
@@ -432,12 +432,12 @@
                             <!-- Core Track Hero Card -->
                             <div class="card card-core-track">
                                 <div class="card-header-row">
-                                    <span class="tag-plan-category" id="dash-core-plan-tag">PLAN 01 / CORE TRACK</span>
-                                    <span class="badge-pct-pill" id="dash-core-pct-badge">38% complete</span>
+                                    <span class="tag-plan-category" id="dash-core-plan-tag">CORE TRACK</span>
+                                    <span class="badge-pct-pill" id="dash-core-pct-badge">0% complete</span>
                                 </div>
 
-                                <h2 class="core-course-title" id="dash-core-title">Applied Data Engineering</h2>
-                                <p class="core-course-sub" id="dash-core-sub">4 modules · 13 lessons · 6 h remaining</p>
+                                <h2 class="core-course-title" id="dash-core-title">Career Learning Track</h2>
+                                <p class="core-course-sub" id="dash-core-sub">Select a course track from the catalog to begin learning.</p>
 
                                 <div class="core-metrics-row">
                                     <!-- Donut Progress Circle -->
@@ -445,27 +445,27 @@
                                         <svg class="donut-svg" viewBox="0 0 100 100">
                                             <circle class="donut-bg" cx="50" cy="50" r="40"></circle>
                                             <circle class="donut-fill" id="dash-donut-fill" cx="50" cy="50" r="40"
-                                                stroke-dasharray="251.2" stroke-dashoffset="155.7"></circle>
+                                                stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
                                         </svg>
-                                        <div class="donut-text" id="dash-donut-text">38%</div>
+                                        <div class="donut-text" id="dash-donut-text">0%</div>
                                     </div>
 
                                     <!-- Key Stats Grid -->
                                     <div class="stats-mini-grid">
                                         <div class="stat-mini-box">
-                                            <div class="stat-val" id="dash-stat-lessons">5/13</div>
+                                            <div class="stat-val" id="dash-stat-lessons">0/0</div>
                                             <div class="stat-lbl">LESSONS DONE</div>
                                         </div>
                                         <div class="stat-mini-box">
-                                            <div class="stat-val" id="dash-stat-time">2 h</div>
+                                            <div class="stat-val" id="dash-stat-time">0 h</div>
                                             <div class="stat-lbl">TIME LOGGED</div>
                                         </div>
                                         <div class="stat-mini-box">
-                                            <div class="stat-val" id="dash-stat-streak">12</div>
+                                            <div class="stat-val" id="dash-stat-streak">0</div>
                                             <div class="stat-lbl">DAY STREAK</div>
                                         </div>
                                         <div class="stat-mini-box">
-                                            <div class="stat-val" id="dash-stat-plans">4</div>
+                                            <div class="stat-val" id="dash-stat-plans">0</div>
                                             <div class="stat-lbl">PLANS ENROLLED</div>
                                         </div>
                                     </div>
@@ -475,8 +475,8 @@
                                 <div class="up-next-card">
                                     <div class="up-next-info">
                                         <div class="up-next-tag">UP NEXT</div>
-                                        <div class="up-next-title" id="dash-upnext-title">Build a daily ingest</div>
-                                        <div class="up-next-meta" id="dash-upnext-meta">Pipelines · Project · 90 min</div>
+                                        <div class="up-next-title" id="dash-upnext-title">Explore Course Catalog</div>
+                                        <div class="up-next-meta" id="dash-upnext-meta">Choose a curriculum to begin</div>
                                     </div>
                                     <button class="btn-open-upnext" onclick="App.openUpNextLesson()">Open</button>
                                 </div>
@@ -487,8 +487,8 @@
                                 <div class="daily-quiz-banner-icon">⚡</div>
                                 <div class="daily-quiz-banner-info">
                                     <div class="daily-quiz-tag">DAILY KNOWLEDGE CHALLENGE</div>
-                                    <h3 class="daily-quiz-title" id="dash-daily-quiz-title">Keep your 12-day streak alive!</h3>
-                                    <p class="daily-quiz-desc">Sharpen your concepts with 5 AI-generated questions from your completed courses.</p>
+                                    <h3 class="daily-quiz-title" id="dash-daily-quiz-title">Daily Knowledge Challenge</h3>
+                                    <p class="daily-quiz-desc">Test your technical concepts with AI-generated questions from your courses.</p>
                                 </div>
                                 <button class="btn-start-daily-quiz" onclick="App.navigate('quiz-arena')">
                                     <span>Start Quiz</span>
@@ -524,8 +524,8 @@
                                         </div>
                                     </div>
                                     <div class="dash-badge-chip">
-                                        <div class="dash-badge-icon badge-theme-rose">
-                                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                                        <div class="dash-badge-icon badge-theme-blue">
+                                            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
                                         </div>
                                         <div class="dash-badge-info">
                                             <div class="dash-badge-name">Quiz Ace</div>
@@ -558,9 +558,9 @@
                                 </div>
 
                                 <div class="chart-caption" id="weekly-chart-caption">
-                                    250 of 240 minutes logged. Target met on Friday.
+                                    Sign in to track your weekly study time.
                                 </div>
-                            </div>
+                            </div>                        </div>
 
                             <!-- Company Leaderboard Mini Widget (Top 3 + Active User) -->
                             <div class="card card-mini-leaderboard">
@@ -985,11 +985,11 @@
                         <div class="card profile-header-card">
                             <div class="profile-header-content">
                                 <img id="profile-avatar" class="profile-avatar-lg"
-                                    src="https://api.dicebear.com/7.x/bottts/svg?seed=Shivam" alt="Profile Avatar">
+                                    src="https://api.dicebear.com/7.x/bottts/svg?seed=CareerPulse" alt="Profile Avatar">
                                 <div class="profile-header-info">
-                                    <h1 class="profile-name" id="profile-name">Shivam Gupta</h1>
-                                    <p class="profile-role-title" id="profile-role-title">Junior Data Engineer</p>
-                                    <p class="profile-email" id="profile-email">shivam.gupta@enterprise.io</p>
+                                    <h1 class="profile-name" id="profile-name">Learner Profile</h1>
+                                    <p class="profile-role-title" id="profile-role-title">Professional Learner</p>
+                                    <p class="profile-email" id="profile-email">learner@enterprise.io</p>
                                 </div>
                             </div>
                             <div class="profile-header-actions" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
@@ -1035,19 +1035,19 @@
                                 <h3 class="summary-heading">ACCOUNT DETAILS</h3>
                                 <div class="summary-row">
                                     <span>Full Name</span>
-                                    <strong id="profile-detail-name">Shivam Gupta</strong>
+                                    <strong id="profile-detail-name">--</strong>
                                 </div>
                                 <div class="summary-row">
                                     <span>Email</span>
-                                    <strong id="profile-detail-email">shivam.gupta@enterprise.io</strong>
+                                    <strong id="profile-detail-email">--</strong>
                                 </div>
                                 <div class="summary-row">
                                     <span>Current Role</span>
-                                    <strong id="profile-detail-role">Junior Data Engineer</strong>
+                                    <strong id="profile-detail-role">--</strong>
                                 </div>
                                 <div class="summary-row">
                                     <span>Target Role</span>
-                                    <strong id="profile-detail-target">Senior Data Engineer</strong>
+                                    <strong id="profile-detail-target">--</strong>
                                 </div>
                                 <div class="summary-row">
                                     <span>Member Since</span>
@@ -1671,7 +1671,7 @@
                         </p>
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-secondary);">Recipient Email Address</label>
-                            <input type="email" id="test-email-recipient" class="form-input" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);" placeholder="e.g. shivamgupta16p80@gmail.com" value="delivered@resend.dev">
+                            <input type="email" id="test-email-recipient" class="form-input" style="width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-primary);" placeholder="e.g. learner@enterprise.io" value="delivered@resend.dev">
                         </div>
                         <button class="btn-primary" id="btn-send-test-email" onclick="App.sendTestEmail()">Send Test Notification</button>
                         <div id="test-email-result" style="margin-top: 1rem; font-size: 0.85rem; display: none; padding: 0.75rem; border-radius: 6px; line-height: 1.45;"></div>
@@ -1895,11 +1895,11 @@
                         </div>
                         <div class="passport-user-meta">
                             <div class="passport-user-name-row">
-                                <h3 class="passport-user-name" id="passport-user-name">Shivam Gupta</h3>
-                                <span class="passport-user-tag" id="passport-user-id">USER_1</span>
+                                <h3 class="passport-user-name" id="passport-user-name">Learner Profile</h3>
+                                <span class="passport-user-tag" id="passport-user-id">LEARNER</span>
                             </div>
-                            <p class="passport-user-role" id="passport-user-role">Junior Data Engineer</p>
-                            <p class="passport-user-email" id="passport-user-email">shivam.gupta@enterprise.io</p>
+                            <p class="passport-user-role" id="passport-user-role">Professional Learner</p>
+                            <p class="passport-user-email" id="passport-user-email">learner@enterprise.io</p>
                         </div>
                     </div>
 
@@ -2111,8 +2111,8 @@
     <canvas id="quiz-confetti-canvas" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999;"></canvas>
 
     <!-- Client Scripts -->
-    <script src="js/api.js?v=2.10"></script>
-    <script src="js/app.js?v=2.10"></script>
+    <script src="js/api.js?v=2.11"></script>
+    <script src="js/app.js?v=2.11"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
